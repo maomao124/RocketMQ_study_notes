@@ -693,6 +693,8 @@ PS H:\opensoft\rocketmq\conf\2m-2s-sync>
 
 #### master1
 
+配置文件名称：broker-a.properties
+
 修改配置如下：
 
 ```sh
@@ -764,6 +766,8 @@ flushDiskType=SYNC_FLUSH
 
 #### slave2
 
+配置文件名称：broker-b-s.properties
+
 ```sh
 #所属集群名字
 brokerClusterName=rocketmq-cluster
@@ -780,7 +784,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=11011
+listenPort=10
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -833,6 +837,8 @@ flushDiskType=ASYNC_FLUSH
 
 #### master2
 
+配置文件名称：broker-b.properties
+
 ```sh
 #所属集群名字
 brokerClusterName=rocketmq-cluster
@@ -849,7 +855,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=10911
+listenPort=10912
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -902,6 +908,8 @@ flushDiskType=SYNC_FLUSH
 
 #### slave1
 
+配置文件名称：broker-a-s.properties
+
 ```sh
 #所属集群名字
 brokerClusterName=rocketmq-cluster
@@ -918,7 +926,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=11011
+listenPort=10931
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -976,4 +984,67 @@ flushDiskType=ASYNC_FLUSH
 
 
 ### 服务启动
+
+#### 启动NameServer
+
+```sh
+.\mqnamesrv
+```
+
+
+
+```sh
+PS H:\opensoft\rocketmq\bin> .\mqnamesrv
+OpenJDK 64-Bit Server VM warning: Using the DefNew young collector with the CMS collector is deprecated and will likely be removed in a future release
+OpenJDK 64-Bit Server VM warning: UseCMSCompactAtFullCollection is deprecated and will likely be removed in a future release.
+The Name Server boot success. serializeType=JSON
+```
+
+
+
+
+
+#### 启动Broker集群
+
+master1：
+
+```sh
+.\mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+```
+
+
+
+slave1：
+
+```sh
+.\mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+```
+
+
+
+master2：
+
+```sh
+.\mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+```
+
+
+
+slave2：
+
+```sh
+.\mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+```
+
+
+
+
+
+```sh
+PS H:\opensoft\rocketmq\bin> .\mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+The broker[broker-a, 172.27.80.1:10911] boot success. serializeType=JSON and name server is 127.0.0.1:9876
+```
+
+```sh
+```
 
