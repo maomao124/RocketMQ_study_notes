@@ -497,21 +497,23 @@ PS H:\opensoft\rocketmq\bin>
 
 ```sh
 mkdir ./data
-mkdir ./data/commitlog
-mkdir ./data/consumequeue
-mkdir ./data/index
+mkdir ./data/master1/commitlog
+mkdir ./data/master1/consumequeue
+mkdir ./data/master1/index
+mkdir ./data/master2/commitlog
+mkdir ./data/master2/consumequeue
+mkdir ./data/master2/index
+mkdir ./data/slave1/commitlog
+mkdir ./data/slave1/consumequeue
+mkdir ./data/slave1/index
+mkdir ./data/slave2/commitlog
+mkdir ./data/slave2/consumequeue
+mkdir ./data/slave2/index
 ```
 
 
 
 ```sh
-PS H:\opensoft\rocketmq> pwd
-
-Path
-----
-H:\opensoft\rocketmq
-
-
 PS H:\opensoft\rocketmq> mkdir ./data
 
 
@@ -520,40 +522,139 @@ PS H:\opensoft\rocketmq> mkdir ./data
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        2022/11/30     18:37                data
+d-----         2022/12/1     20:42                data
 
 
-PS H:\opensoft\rocketmq> mkdir ./data/commitlog
+PS H:\opensoft\rocketmq> mkdir ./data/master1/commitlog
 
 
-    目录: H:\opensoft\rocketmq\data
-
-
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
-d-----        2022/11/30     18:37                commitlog
-
-
-PS H:\opensoft\rocketmq> mkdir ./data/consumequeue
-
-
-    目录: H:\opensoft\rocketmq\data
+    目录: H:\opensoft\rocketmq\data\master1
 
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        2022/11/30     18:37                consumequeue
+d-----         2022/12/1     20:42                commitlog
 
 
-PS H:\opensoft\rocketmq> mkdir ./data/index
+PS H:\opensoft\rocketmq> mkdir ./data/master1/consumequeue
 
 
-    目录: H:\opensoft\rocketmq\data
+    目录: H:\opensoft\rocketmq\data\master1
 
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        2022/11/30     18:37                index
+d-----         2022/12/1     20:42                consumequeue
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/master1/index
+
+
+    目录: H:\opensoft\rocketmq\data\master1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                index
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/master2/commitlog
+
+
+    目录: H:\opensoft\rocketmq\data\master2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                commitlog
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/master2/consumequeue
+
+
+    目录: H:\opensoft\rocketmq\data\master2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                consumequeue
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/master2/index
+
+
+    目录: H:\opensoft\rocketmq\data\master2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                index
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave1/commitlog
+
+
+    目录: H:\opensoft\rocketmq\data\slave1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                commitlog
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave1/consumequeue
+
+
+    目录: H:\opensoft\rocketmq\data\slave1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                consumequeue
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave1/index
+
+
+    目录: H:\opensoft\rocketmq\data\slave1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                index
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave2/commitlog
+
+
+    目录: H:\opensoft\rocketmq\data\slave2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                commitlog
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave2/consumequeue
+
+
+    目录: H:\opensoft\rocketmq\data\slave2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                consumequeue
+
+
+PS H:\opensoft\rocketmq> mkdir ./data/slave2/index
+
+
+    目录: H:\opensoft\rocketmq\data\slave2
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                index
 
 
 PS H:\opensoft\rocketmq>
@@ -571,7 +672,7 @@ Mode                 LastWriteTime         Length Name
 d-----        2022/11/29     21:21                benchmark
 d-----        2022/11/29     21:21                bin
 d-----        2022/11/29     21:21                conf
-d-----        2022/11/30     18:37                data
+d-----         2022/12/1     20:42                data
 d-----        2022/11/29     21:21                lib
 -a----         2019/3/28     17:08          17336 LICENSE
 -a----         2019/5/21     10:44           1337 NOTICE
@@ -587,12 +688,27 @@ PS H:\opensoft\rocketmq\data> ls
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        2022/11/30     18:37                commitlog
-d-----        2022/11/30     18:37                consumequeue
-d-----        2022/11/30     18:37                index
+d-----         2022/12/1     20:42                master1
+d-----         2022/12/1     20:42                master2
+d-----         2022/12/1     20:42                slave1
+d-----         2022/12/1     20:42                slave2
 
 
-PS H:\opensoft\rocketmq\data>
+PS H:\opensoft\rocketmq\data> cd .\master1\
+PS H:\opensoft\rocketmq\data\master1> ls
+
+
+    目录: H:\opensoft\rocketmq\data\master1
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/1     20:42                commitlog
+d-----         2022/12/1     20:42                consumequeue
+d-----         2022/12/1     20:42                index
+
+
+PS H:\opensoft\rocketmq\data\master1>
 ```
 
 
@@ -727,17 +843,17 @@ mapedFileSizeConsumeQueue=300000
 #检测物理文件磁盘空间
 diskMaxUsedSpaceRatio=88
 #存储路径
-storePathRootDir=./../data
+storePathRootDir=./../data/master1
 #commitLog 存储路径
-storePathCommitLog=./../data/commitlog
+storePathCommitLog=./../data/master1/commitlog
 #消费队列存储路径存储路径
-storePathConsumeQueue=./../data/consumequeue
+storePathConsumeQueue=./../data/master1/consumequeue
 #消息索引存储路径
-storePathIndex=./../data/index
+storePathIndex=./../data/master1/index
 #checkpoint 文件存储路径
-storeCheckpoint=./../data/checkpoint
+storeCheckpoint=./../data/master1/checkpoint
 #abort 文件存储路径
-abortFile=./../data/abort
+abortFile=./../data/master1/abort
 #限制的消息大小
 maxMessageSize=65536
 #flushCommitLogLeastPages=4
@@ -784,7 +900,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=10
+listenPort=10932
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -798,17 +914,17 @@ mapedFileSizeConsumeQueue=300000
 #检测物理文件磁盘空间
 diskMaxUsedSpaceRatio=88
 #存储路径
-storePathRootDir=./../data
+storePathRootDir=./../data/slave2
 #commitLog 存储路径
-storePathCommitLog=./../data/commitlog
+storePathCommitLog=./../data/slave2/commitlog
 #消费队列存储路径存储路径
-storePathConsumeQueue=./../data/consumequeue
+storePathConsumeQueue=./../data/slave2/consumequeue
 #消息索引存储路径
-storePathIndex=./../data/index
+storePathIndex=./../data/slave2/index
 #checkpoint 文件存储路径
-storeCheckpoint=./../data/checkpoint
+storeCheckpoint=./../data/slave2/checkpoint
 #abort 文件存储路径
-abortFile=./../data/abort
+abortFile=./../data/slave2/abort
 #限制的消息大小
 maxMessageSize=65536
 #flushCommitLogLeastPages=4
@@ -869,17 +985,17 @@ mapedFileSizeConsumeQueue=300000
 #检测物理文件磁盘空间
 diskMaxUsedSpaceRatio=88
 #存储路径
-storePathRootDir=./../data
+storePathRootDir=./../data/master2
 #commitLog 存储路径
-storePathCommitLog=./../data/commitlog
+storePathCommitLog=./../data/master2/commitlog
 #消费队列存储路径存储路径
-storePathConsumeQueue=./../data/consumequeue
+storePathConsumeQueue=./../data/master2/consumequeue
 #消息索引存储路径
-storePathIndex=./../data/index
+storePathIndex=./../data/master2/index
 #checkpoint 文件存储路径
-storeCheckpoint=./../data/checkpoint
+storeCheckpoint=./../data/master2/checkpoint
 #abort 文件存储路径
-abortFile=./../data/abort
+abortFile=./../data/master2/abort
 #限制的消息大小
 maxMessageSize=65536
 #flushCommitLogLeastPages=4
@@ -940,17 +1056,17 @@ mapedFileSizeConsumeQueue=300000
 #检测物理文件磁盘空间
 diskMaxUsedSpaceRatio=88
 #存储路径
-storePathRootDir=./../data
+storePathRootDir=./../data/slave1
 #commitLog 存储路径
-storePathCommitLog=./../data/commitlog
+storePathCommitLog=./../data/slave1/commitlog
 #消费队列存储路径存储路径
-storePathConsumeQueue=./../data/consumequeue
+storePathConsumeQueue=./../data/slave1/consumequeue
 #消息索引存储路径
-storePathIndex=./../data/index
+storePathIndex=./../data/slave1/index
 #checkpoint 文件存储路径
-storeCheckpoint=./../data/checkpoint
+storeCheckpoint=./../data/slave1/checkpoint
 #abort 文件存储路径
-abortFile=./../data/abort
+abortFile=./../data/slave1/abort
 #限制的消息大小
 maxMessageSize=65536
 #flushCommitLogLeastPages=4
