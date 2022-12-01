@@ -603,3 +603,377 @@ PS H:\opensoft\rocketmq\data>
 
 ### broker配置文件
 
+配置文件使用的是软件目录下\conf\2m-2s-sync的配置文件
+
+
+
+```sh
+PS H:\opensoft\rocketmq> ls
+
+
+    目录: H:\opensoft\rocketmq
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        2022/11/29     21:21                benchmark
+d-----        2022/11/29     21:21                bin
+d-----        2022/11/29     21:21                conf
+d-----        2022/11/30     18:37                data
+d-----        2022/11/29     21:21                lib
+-a----         2019/3/28     17:08          17336 LICENSE
+-a----         2019/5/21     10:44           1337 NOTICE
+-a----        2022/11/29     21:19           2523 README.md
+
+
+PS H:\opensoft\rocketmq> cd conf
+PS H:\opensoft\rocketmq\conf> ls
+
+
+    目录: H:\opensoft\rocketmq\conf
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        2022/11/29     21:21                2m-2s-async
+d-----        2022/11/29     21:21                2m-2s-sync
+d-----        2022/11/29     21:21                2m-noslave
+d-----        2022/11/29     21:21                dledger
+-a----         2019/3/28     17:08            949 broker.conf
+-a----         2019/3/28     17:08          14978 logback_broker.xml
+-a----         2019/3/28     17:08           3836 logback_namesrv.xml
+-a----         2019/3/28     17:08           3761 logback_tools.xml
+-a----         2019/5/21     10:44           1305 plain_acl.yml
+-a----         2019/5/21     10:44            834 tools.yml
+
+
+PS H:\opensoft\rocketmq\conf> cd .\2m-2s-sync\
+PS H:\opensoft\rocketmq\conf\2m-2s-sync> ls
+
+
+    目录: H:\opensoft\rocketmq\conf\2m-2s-sync
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----         2019/3/28     17:08            922 broker-a-s.properties
+-a----         2019/3/28     17:08            928 broker-a.properties
+-a----         2019/3/28     17:08            922 broker-b-s.properties
+-a----         2019/3/28     17:08            928 broker-b.properties
+
+
+PS H:\opensoft\rocketmq\conf\2m-2s-sync> cat .\broker-a.properties
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+brokerClusterName=DefaultCluster
+brokerName=broker-a
+brokerId=0
+deleteWhen=04
+fileReservedTime=48
+brokerRole=SYNC_MASTER
+flushDiskType=ASYNC_FLUSH
+PS H:\opensoft\rocketmq\conf\2m-2s-sync>
+```
+
+
+
+
+
+#### master1
+
+修改配置如下：
+
+```sh
+#所属集群名字
+brokerClusterName=rocketmq-cluster
+#broker名字，注意此处不同的配置文件填写的不一样
+brokerName=broker-a
+#0 表示 Master，>0 表示 Slave
+brokerId=0
+#nameServer地址，分号分割
+namesrvAddr=127.0.0.1:9876
+#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+defaultTopicQueueNums=4
+#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+autoCreateTopicEnable=true
+#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+autoCreateSubscriptionGroup=true
+#Broker 对外服务的监听端口
+listenPort=10911
+#删除文件时间点，默认凌晨 4点
+deleteWhen=04
+#文件保留时间，默认 48 小时
+fileReservedTime=120
+#commitLog每个文件的大小默认1G
+mapedFileSizeCommitLog=1073741824
+#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+mapedFileSizeConsumeQueue=300000
+#destroyMapedFileIntervalForcibly=120000
+#redeleteHangedFileInterval=120000
+#检测物理文件磁盘空间
+diskMaxUsedSpaceRatio=88
+#存储路径
+storePathRootDir=./../data
+#commitLog 存储路径
+storePathCommitLog=./../data/commitlog
+#消费队列存储路径存储路径
+storePathConsumeQueue=./../data/consumequeue
+#消息索引存储路径
+storePathIndex=./../data/index
+#checkpoint 文件存储路径
+storeCheckpoint=./../data/checkpoint
+#abort 文件存储路径
+abortFile=./../data/abort
+#限制的消息大小
+maxMessageSize=65536
+#flushCommitLogLeastPages=4
+#flushConsumeQueueLeastPages=2
+#flushCommitLogThoroughInterval=10000
+#flushConsumeQueueThoroughInterval=60000
+#Broker 的角色
+#- ASYNC_MASTER 异步复制Master
+#- SYNC_MASTER 同步双写Master
+#- SLAVE
+brokerRole=SYNC_MASTER
+#刷盘方式
+#- ASYNC_FLUSH 异步刷盘
+#- SYNC_FLUSH 同步刷盘
+flushDiskType=SYNC_FLUSH
+#checkTransactionMessageEnable=false
+#发消息线程池数量
+#sendMessageThreadPoolNums=128
+#拉消息线程池数量
+#pullMessageThreadPoolNums=128
+```
+
+
+
+
+
+#### slave2
+
+```sh
+#所属集群名字
+brokerClusterName=rocketmq-cluster
+#broker名字，注意此处不同的配置文件填写的不一样
+brokerName=broker-b
+#0 表示 Master，>0 表示 Slave
+brokerId=1
+#nameServer地址，分号分割
+namesrvAddr=127.0.0.1:9876
+#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+defaultTopicQueueNums=4
+#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+autoCreateTopicEnable=true
+#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+autoCreateSubscriptionGroup=true
+#Broker 对外服务的监听端口
+listenPort=11011
+#删除文件时间点，默认凌晨 4点
+deleteWhen=04
+#文件保留时间，默认 48 小时
+fileReservedTime=120
+#commitLog每个文件的大小默认1G
+mapedFileSizeCommitLog=1073741824
+#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+mapedFileSizeConsumeQueue=300000
+#destroyMapedFileIntervalForcibly=120000
+#redeleteHangedFileInterval=120000
+#检测物理文件磁盘空间
+diskMaxUsedSpaceRatio=88
+#存储路径
+storePathRootDir=./../data
+#commitLog 存储路径
+storePathCommitLog=./../data/commitlog
+#消费队列存储路径存储路径
+storePathConsumeQueue=./../data/consumequeue
+#消息索引存储路径
+storePathIndex=./../data/index
+#checkpoint 文件存储路径
+storeCheckpoint=./../data/checkpoint
+#abort 文件存储路径
+abortFile=./../data/abort
+#限制的消息大小
+maxMessageSize=65536
+#flushCommitLogLeastPages=4
+#flushConsumeQueueLeastPages=2
+#flushCommitLogThoroughInterval=10000
+#flushConsumeQueueThoroughInterval=60000
+#Broker 的角色
+#- ASYNC_MASTER 异步复制Master
+#- SYNC_MASTER 同步双写Master
+#- SLAVE
+brokerRole=SLAVE
+#刷盘方式
+#- ASYNC_FLUSH 异步刷盘
+#- SYNC_FLUSH 同步刷盘
+flushDiskType=ASYNC_FLUSH
+#checkTransactionMessageEnable=false
+#发消息线程池数量
+#sendMessageThreadPoolNums=128
+#拉消息线程池数量
+#pullMessageThreadPoolNums=128
+```
+
+
+
+
+
+#### master2
+
+```sh
+#所属集群名字
+brokerClusterName=rocketmq-cluster
+#broker名字，注意此处不同的配置文件填写的不一样
+brokerName=broker-b
+#0 表示 Master，>0 表示 Slave
+brokerId=0
+#nameServer地址，分号分割
+namesrvAddr=127.0.0.1:9876
+#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+defaultTopicQueueNums=4
+#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+autoCreateTopicEnable=true
+#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+autoCreateSubscriptionGroup=true
+#Broker 对外服务的监听端口
+listenPort=10911
+#删除文件时间点，默认凌晨 4点
+deleteWhen=04
+#文件保留时间，默认 48 小时
+fileReservedTime=120
+#commitLog每个文件的大小默认1G
+mapedFileSizeCommitLog=1073741824
+#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+mapedFileSizeConsumeQueue=300000
+#destroyMapedFileIntervalForcibly=120000
+#redeleteHangedFileInterval=120000
+#检测物理文件磁盘空间
+diskMaxUsedSpaceRatio=88
+#存储路径
+storePathRootDir=./../data
+#commitLog 存储路径
+storePathCommitLog=./../data/commitlog
+#消费队列存储路径存储路径
+storePathConsumeQueue=./../data/consumequeue
+#消息索引存储路径
+storePathIndex=./../data/index
+#checkpoint 文件存储路径
+storeCheckpoint=./../data/checkpoint
+#abort 文件存储路径
+abortFile=./../data/abort
+#限制的消息大小
+maxMessageSize=65536
+#flushCommitLogLeastPages=4
+#flushConsumeQueueLeastPages=2
+#flushCommitLogThoroughInterval=10000
+#flushConsumeQueueThoroughInterval=60000
+#Broker 的角色
+#- ASYNC_MASTER 异步复制Master
+#- SYNC_MASTER 同步双写Master
+#- SLAVE
+brokerRole=SYNC_MASTER
+#刷盘方式
+#- ASYNC_FLUSH 异步刷盘
+#- SYNC_FLUSH 同步刷盘
+flushDiskType=SYNC_FLUSH
+#checkTransactionMessageEnable=false
+#发消息线程池数量
+#sendMessageThreadPoolNums=128
+#拉消息线程池数量
+#pullMessageThreadPoolNums=128
+```
+
+
+
+
+
+#### slave1
+
+```sh
+#所属集群名字
+brokerClusterName=rocketmq-cluster
+#broker名字，注意此处不同的配置文件填写的不一样
+brokerName=broker-a
+#0 表示 Master，>0 表示 Slave
+brokerId=1
+#nameServer地址，分号分割
+namesrvAddr=127.0.0.1:9876
+#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+defaultTopicQueueNums=4
+#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+autoCreateTopicEnable=true
+#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+autoCreateSubscriptionGroup=true
+#Broker 对外服务的监听端口
+listenPort=11011
+#删除文件时间点，默认凌晨 4点
+deleteWhen=04
+#文件保留时间，默认 48 小时
+fileReservedTime=120
+#commitLog每个文件的大小默认1G
+mapedFileSizeCommitLog=1073741824
+#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+mapedFileSizeConsumeQueue=300000
+#destroyMapedFileIntervalForcibly=120000
+#redeleteHangedFileInterval=120000
+#检测物理文件磁盘空间
+diskMaxUsedSpaceRatio=88
+#存储路径
+storePathRootDir=./../data
+#commitLog 存储路径
+storePathCommitLog=./../data/commitlog
+#消费队列存储路径存储路径
+storePathConsumeQueue=./../data/consumequeue
+#消息索引存储路径
+storePathIndex=./../data/index
+#checkpoint 文件存储路径
+storeCheckpoint=./../data/checkpoint
+#abort 文件存储路径
+abortFile=./../data/abort
+#限制的消息大小
+maxMessageSize=65536
+#flushCommitLogLeastPages=4
+#flushConsumeQueueLeastPages=2
+#flushCommitLogThoroughInterval=10000
+#flushConsumeQueueThoroughInterval=60000
+#Broker 的角色
+#- ASYNC_MASTER 异步复制Master
+#- SYNC_MASTER 同步双写Master
+#- SLAVE
+brokerRole=SLAVE
+#刷盘方式
+#- ASYNC_FLUSH 异步刷盘
+#- SYNC_FLUSH 同步刷盘
+flushDiskType=ASYNC_FLUSH
+#checkTransactionMessageEnable=false
+#发消息线程池数量
+#sendMessageThreadPoolNums=128
+#拉消息线程池数量
+#pullMessageThreadPoolNums=128
+```
+
+
+
+
+
+
+
+
+
+
+
+### 服务启动
+
