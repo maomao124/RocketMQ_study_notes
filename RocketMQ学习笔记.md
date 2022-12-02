@@ -900,7 +900,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=10932
+listenPort=10941
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -971,7 +971,7 @@ autoCreateTopicEnable=true
 #是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
 autoCreateSubscriptionGroup=true
 #Broker 对外服务的监听端口
-listenPort=10912
+listenPort=10921
 #删除文件时间点，默认凌晨 4点
 deleteWhen=04
 #文件保留时间，默认 48 小时
@@ -1162,5 +1162,133 @@ The broker[broker-a, 172.27.80.1:10911] boot success. serializeType=JSON and nam
 ```
 
 ```sh
+PS H:\opensoft\rocketmq\bin> .\mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+The broker[broker-a, 172.27.80.1:10931] boot success. serializeType=JSON and name server is 127.0.0.1:9876
 ```
 
+```sh
+PS H:\opensoft\rocketmq\bin> .\mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+The broker[broker-b, 172.27.80.1:10921] boot success. serializeType=JSON and name server is 127.0.0.1:9876
+```
+
+```sh
+PS H:\opensoft\rocketmq\bin> .\mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+The broker[broker-b, 172.27.80.1:10941] boot success. serializeType=JSON and name server is 127.0.0.1:9876
+```
+
+
+
+
+
+
+
+
+
+### 启动脚本
+
+多窗口模式
+
+```sh
+cd bin
+start "RocketMQ-nameServer-9876" mqnamesrv
+start "RocketMQ-broker-master1-10911" mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+start "RocketMQ-broker-slave1-10931" mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+start "RocketMQ-broker-master2-10921" mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+start "RocketMQ-broker-slave2-10941" mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+```
+
+
+
+单窗口模式
+
+```sh
+cd bin
+start /b "RocketMQ-nameServer-9876" mqnamesrv
+start /b "RocketMQ-broker-master1-10911" mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+start /b "RocketMQ-broker-slave1-10931" mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+start /b "RocketMQ-broker-master2-10921" mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+start /b "RocketMQ-broker-slave2-10941" mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+```
+
+
+
+
+
+```sh
+PS H:\opensoft\rocketmq> ls
+
+
+    目录: H:\opensoft\rocketmq
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        2022/11/29     21:21                benchmark
+d-----        2022/11/29     21:21                bin
+d-----        2022/11/29     21:21                conf
+d-----         2022/12/1     20:42                data
+d-----        2022/11/29     21:21                lib
+-a----         2019/3/28     17:08          17336 LICENSE
+-a----         2019/5/21     10:44           1337 NOTICE
+-a----        2022/11/29     21:19           2523 README.md
+-a----         2022/12/2     10:57            424 集群启动-2m-2s-sync.bat
+-a----         2022/12/2     10:59            439 集群启动-单窗口-2m-2s-sync.bat
+
+
+PS H:\opensoft\rocketmq> cat .\集群启动-2m-2s-sync.bat
+cd bin
+start "RocketMQ-nameServer-9876" mqnamesrv
+start "RocketMQ-broker-master1-10911" mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+start "RocketMQ-broker-slave1-10931" mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+start "RocketMQ-broker-master2-10921" mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+start "RocketMQ-broker-slave2-10941" mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+
+PS H:\opensoft\rocketmq> cat .\集群启动-单窗口-2m-2s-sync.bat
+cd bin
+start /b "RocketMQ-nameServer-9876" mqnamesrv
+start /b "RocketMQ-broker-master1-10911" mqbroker -c ./../conf/2m-2s-sync/broker-a.properties
+start /b "RocketMQ-broker-slave1-10931" mqbroker -c ./../conf/2m-2s-sync/broker-a-s.properties
+start /b "RocketMQ-broker-master2-10921" mqbroker -c ./../conf/2m-2s-sync/broker-b.properties
+start /b "RocketMQ-broker-slave2-10941" mqbroker -c ./../conf/2m-2s-sync/broker-b-s.properties
+
+PS H:\opensoft\rocketmq>
+```
+
+
+
+
+
+
+
+
+
+### 查看进程状态
+
+```sh
+PS H:\opensoft\rocketmq> jps
+10848 NamesrvStartup
+11856 BrokerStartup
+23268 BrokerStartup
+14568 BrokerStartup
+11788 Jps
+14300 BrokerStartup
+PS H:\opensoft\rocketmq>
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# mqadmin管理工具
