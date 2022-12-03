@@ -3295,3 +3295,232 @@ public class OnewayProducer
 
 ### 消费消息
 
+#### 负载均衡模式
+
+消费者采用负载均衡方式消费消息，多个消费者共同消费队列消息，每个消费者处理的消息不同
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_基本消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): LoadBalanceConsumer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/3
+ * Time(创建时间)： 19:10
+ * Version(版本): 1.0
+ * Description(描述)： 消费者-负载均衡模式
+ */
+
+public class LoadBalanceConsumer
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //创建消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //订阅topic
+        defaultMQPushConsumer.subscribe("test_topic", "*");
+        //设置消费模式-负载均衡
+        defaultMQPushConsumer.setMessageModel(MessageModel.CLUSTERING);
+        //注册监听器，处理消息
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                //打印
+                System.out.println("线程" + Thread.currentThread().getName() + "消费消息：" + list);
+                //返回成功的状态
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动消费者
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+启动后的日志打印
+
+```sh
+线程ConsumeMessageThread_mao_group_5消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=159, queueOffset=2, sysFlag=0, bornTimestamp=1670058564408, bornHost=/223.156.159.141:62262, storeTimestamp=1670058564409, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA900000000000004F2, commitLogOffset=1266, bodyCRC=441618388, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327850, UNIQ_KEY=7F0000015F4C66D3C6170DFB2B380010, WAIT=true}, body=[104, 101, 108, 108, 111, 49, 54], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_10消费消息：[MessageExt [brokerName=broker-a, queueId=0, storeSize=159, queueOffset=4, sysFlag=0, bornTimestamp=1670058564583, bornHost=/223.156.159.141:62263, storeTimestamp=1670058564583, storeHost=/223.156.159.141:10911, msgId=DF9C9F8D00002A9F00000000000009EC, commitLogOffset=2540, bodyCRC=829275372, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=53, CONSUME_START_TIME=1670066327849, UNIQ_KEY=7F0000015F4C66D3C6170DFB2BE70023, WAIT=true}, body=[104, 101, 108, 108, 111, 51, 53], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_7消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=159, queueOffset=3, sysFlag=0, bornTimestamp=1670058564483, bornHost=/223.156.159.141:62262, storeTimestamp=1670058564483, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA9000000000000076E, commitLogOffset=1902, bodyCRC=1601289531, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327849, UNIQ_KEY=7F0000015F4C66D3C6170DFB2B830018, WAIT=true}, body=[104, 101, 108, 108, 111, 50, 52], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_3消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=158, queueOffset=1, sysFlag=0, bornTimestamp=1670058564316, bornHost=/223.156.159.141:62262, storeTimestamp=1670058564317, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA90000000000000278, commitLogOffset=632, bodyCRC=2129486240, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327849, UNIQ_KEY=7F0000015F4C66D3C6170DFB2ADC0008, WAIT=true}, body=[104, 101, 108, 108, 111, 56], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_9消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=159, queueOffset=4, sysFlag=0, bornTimestamp=1670058564558, bornHost=/223.156.159.141:62262, storeTimestamp=1670058564558, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA900000000000009EA, commitLogOffset=2538, bodyCRC=789129551, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327849, UNIQ_KEY=7F0000015F4C66D3C6170DFB2BCE0020, WAIT=true}, body=[104, 101, 108, 108, 111, 51, 50], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_20消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=159, queueOffset=9, sysFlag=0, bornTimestamp=1670058565099, bornHost=/223.156.159.141:62262, storeTimestamp=1670058565100, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA90000000000001656, commitLogOffset=5718, bodyCRC=1264970827, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327853, UNIQ_KEY=7F0000015F4C66D3C6170DFB2DEB0048, WAIT=true}, body=[104, 101, 108, 108, 111, 55, 50], transactionId='null'}]]
+线程ConsumeMessageThread_mao_group_17消费消息：[MessageExt [brokerName=broker-b, queueId=1, storeSize=159, queueOffset=8, sysFlag=0, bornTimestamp=1670058565008, bornHost=/223.156.159.141:62262, storeTimestamp=1670058565009, storeHost=/223.156.159.141:10921, msgId=DF9C9F8D00002AA900000000000013DA, commitLogOffset=5082, bodyCRC=991787071, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message{topic='test_topic', flag=0, properties={MIN_OFFSET=0, MAX_OFFSET=54, CONSUME_START_TIME=1670066327852, UNIQ_KEY=7F0000015F4C66D3C6170DFB2D900040, WAIT=true}, body=[104, 101, 108, 108, 111, 54, 52], transactionId='null'}]]
+......
+```
+
+
+
+
+
+
+
+验证负载均衡模式
+
+
+
+启动3个消费者
+
+![image-20221203194139538](img/RocketMQ学习笔记/image-20221203194139538.png)
+
+
+
+![image-20221203194205742](img/RocketMQ学习笔记/image-20221203194205742.png)
+
+
+
+
+
+启动生产者
+
+![image-20221203194248631](img/RocketMQ学习笔记/image-20221203194248631.png)
+
+
+
+
+
+观察3个消费者消费的消息
+
+
+
+第一个消费者：
+
+```sh
+hello3
+hello4
+hello5
+hello11
+hello12
+hello13
+hello19
+hello20
+hello21
+hello27
+hello28
+hello29
+hello35
+hello36
+hello37
+hello43
+hello44
+hello45
+hello51
+hello52
+hello53
+hello59
+......
+```
+
+
+
+![image-20221203194345914](img/RocketMQ学习笔记/image-20221203194345914.png)
+
+
+
+
+
+第二个消费者：
+
+```sh
+hello0
+hello6
+hello7
+hello8
+hello14
+hello15
+hello16
+hello22
+hello23
+hello24
+hello30
+hello31
+hello32
+hello38
+hello39
+hello40
+hello46
+hello47
+hello48
+hello54
+......
+```
+
+
+
+![image-20221203194418348](img/RocketMQ学习笔记/image-20221203194418348.png)
+
+
+
+
+
+第三个消费者：
+
+```sh
+hello1
+hello2
+hello9
+hello10
+hello17
+hello18
+hello25
+hello26
+hello33
+hello34
+hello41
+hello42
+hello49
+hello50
+hello57
+hello58
+hello65
+hello66
+hello73
+hello74
+hello81
+hello82
+......
+```
+
+
+
+![image-20221203194450487](img/RocketMQ学习笔记/image-20221203194450487.png)
+
+
+
+负载均衡模式下，消息被消费一次
+
+
+
+
+
+
+
+
+
+#### 广播模式
+
