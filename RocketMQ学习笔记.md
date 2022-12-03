@@ -3001,14 +3001,134 @@ http://localhost:8080
 ## RocketMQ客户端依赖
 
 ```xml
-<dependency>
-    <groupId>org.apache.rocketmq</groupId>
-    <artifactId>rocketmq-client</artifactId>
-    <version>4.4.0</version>
-</dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>4.9.4</version>
+        </dependency>
 ```
 
 
+
+
+
+
+
+## 基本消息的发送与接收
+
+### 消息发送
+
+#### 发送同步消息
+
+这种可靠性同步地发送方式使用的比较广泛，比如：重要的消息通知，短信通知。
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Project name(项目名称)：RocketMQ_基本消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): SyncProducer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/3
+ * Time(创建时间)： 17:01
+ * Version(版本): 1.0
+ * Description(描述)： 生产者-同步消息
+ */
+
+public class SyncProducer
+{
+    public static void main(String[] args)
+            throws MQClientException, MQBrokerException, RemotingException, InterruptedException
+    {
+        //生产者，参数为生产者组名
+        DefaultMQProducer defaultMQProducer = new DefaultMQProducer("mao_group");
+        //nameserver地址
+        defaultMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //启动
+        defaultMQProducer.start();
+        //发送300条消息
+        for (int i = 0; i < 300; i++)
+        {
+            //创建消息对象，参数分别是话题和消息体
+            Message message = new Message("test_topic", ("hello" + i).getBytes(StandardCharsets.UTF_8));
+            //发送消息，获取发送结果
+            SendResult sendResult = defaultMQProducer.send(message);
+            //直接打印发送结果
+            System.out.println(sendResult);
+            System.out.println();
+        }
+        //关闭
+        defaultMQProducer.shutdown();
+
+    }
+}
+
+```
+
+
+
+
+
+启动后打印的日志
+
+```sh
+SendResult [sendStatus=SEND_OK, msgId=7F0000015F4C66D3C6170DFB29950000, offsetMsgId=DF9C9F8D00002AA90000000000000000, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-b, queueId=1], queueOffset=0]
+
+SendResult [sendStatus=SEND_OK, msgId=7F0000015F4C66D3C6170DFB2A0E0001, offsetMsgId=DF9C9F8D00002AA9000000000000009E, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-b, queueId=2], queueOffset=0]
+
+SendResult [sendStatus=SEND_OK, msgId=7F0000015F4C66D3C6170DFB2A1C0002, offsetMsgId=DF9C9F8D00002AA9000000000000013C, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-b, queueId=3], queueOffset=0]
+
+SendResult [sendStatus=SEND_OK, msgId=7F0000015F4C66D3C6170DFB2A2D0003, offsetMsgId=DF9C9F8D00002A9F0000000000000000, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=0], queueOffset=0]
+
+SendResult [sendStatus=SEND_OK, msgId=7F0000015F4C66D3C6170DFB2A780004, offsetMsgId=DF9C9F8D00002A9F000000000000009E, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=0]
+......
+```
+
+
+
+
+
+![image-20221203171239582](img/RocketMQ学习笔记/image-20221203171239582.png)
+
+
+
+
+
+![image-20221203171353894](img/RocketMQ学习笔记/image-20221203171353894.png)
+
+
+
+
+
+![image-20221203171447124](img/RocketMQ学习笔记/image-20221203171447124.png)
+
+
+
+![image-20221203171457284](img/RocketMQ学习笔记/image-20221203171457284.png)
+
+
+
+
+
+
+
+
+
+#### 发送异步消息
+
+异步消息通常用在对响应时间敏感的业务场景，即发送端不能容忍长时间地等待Broker的响应
 
 
 
