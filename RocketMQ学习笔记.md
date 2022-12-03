@@ -1292,3 +1292,460 @@ PS H:\opensoft\rocketmq>
 
 
 # mqadmin管理工具
+
+## 集群监控平台搭建
+
+### 克隆开源项目
+
+项目地址：https://github.com/apache/rocketmq-externals
+
+
+
+```sh
+git clone https://github.com/apache/rocketmq-externals
+```
+
+
+
+![image-20221203154203243](img/RocketMQ学习笔记/image-20221203154203243.png)
+
+
+
+![image-20221203160214233](img/RocketMQ学习笔记/image-20221203160214233.png)
+
+
+
+
+
+如果没有rocketmq-console
+
+可以使用以下地址下载
+
+https://gitcode.net/mirrors/apache/rocketmq-externals/-/tree/rocketmq-console-1.0.0
+
+
+
+
+
+
+
+
+
+
+
+### 配置集群地址
+
+打包前在```rocketmq-console```中配置```namesrv```集群地址
+
+```sh
+rocketmq.config.namesrvAddr=127.0.0.1:9876
+```
+
+
+
+```sh
+server.contextPath=
+server.port=8080
+#spring.application.index=true
+spring.application.name=rocketmq-console
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+logging.config=classpath:logback.xml
+#if this value is empty,use env value rocketmq.config.namesrvAddr  NAMESRV_ADDR | now, you can set it in ops page.default localhost:9876
+rocketmq.config.namesrvAddr=127.0.0.1:9876
+#if you use rocketmq version < 3.5.8, rocketmq.config.isVIPChannel should be false.default true
+rocketmq.config.isVIPChannel=
+#rocketmq-console's data path:dashboard/monitor
+rocketmq.config.dataPath=/tmp/rocketmq-console/data
+#set it false if you don't want use dashboard.default true
+rocketmq.config.enableDashBoardCollect=true
+```
+
+
+
+
+
+![image-20221203162056941](img/RocketMQ学习笔记/image-20221203162056941.png)
+
+
+
+
+
+
+
+
+
+### 打包
+
+```sh
+mvn clean package -DskipTests
+```
+
+
+
+```sh
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console> ls
+
+
+    目录: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2017/6/15     10:47                doc
+d-----         2017/6/15     10:47                src
+d-----         2017/6/15     10:47                style
+d-----         2022/12/3     16:24                target
+------         2017/6/15     10:47             23 .gitignore
+------         2017/6/15     10:47            322 .travis.yml
+------         2017/6/15     10:47          29843 LICENSE
+------         2017/6/15     10:47            176 NOTICE
+------         2017/6/15     10:47          11424 pom.xml
+------         2017/6/15     10:47           2169 README.md
+
+
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console> mvn clean package -DskipTests
+[INFO] Scanning for projects...
+[INFO]
+[INFO] -------------------< org.apache:rocketmq-console-ng >-------------------
+[INFO] Building rocketmq-console-ng 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.6.1:clean (default-clean) @ rocketmq-console-ng ---
+[INFO] Deleting C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target
+[INFO]
+[INFO] --- maven-checkstyle-plugin:2.17:check (validate) @ rocketmq-console-ng ---
+[INFO] Starting audit...
+Audit done.
+[INFO]
+[INFO] --- jacoco-maven-plugin:0.7.9:prepare-agent (default-prepare-agent) @ rocketmq-console-ng ---
+[INFO] argLine set to -javaagent:C:\\Users\\mao\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.7.9\\org.jacoco.agent-0.7.9-runtime.jar=destfile=C:\\Users\\mao\\Desktop\\rocketmq-externals-rocketmq-console-1.0.0\\rocketmq-console\\target\\jacoco.exec
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ rocketmq-console-ng ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 1 resource
+[INFO] Copying 960 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ rocketmq-console-ng ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 59 source files to C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target\classes
+[WARNING] /C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/src/main/java/org/apache/rocketmq/console/task/DashboardCollectTask.java: 某些输入文件使用或覆盖了已过时的 API。
+[WARNING] /C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/src/main/java/org/apache/rocketmq/console/task/DashboardCollectTask.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+[WARNING] /C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/src/main/java/org/apache/rocketmq/console/support/GlobalRestfulResponseBodyAdvice.java: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\src\main\java\org\apache\rocketmq\console\support\GlobalRestfulResponseBodyAdvice.java使用了未经检查或不安全的操作。
+[WARNING] /C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/src/main/java/org/apache/rocketmq/console/support/GlobalRestfulResponseBodyAdvice.java: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ rocketmq-console-ng ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 3 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ rocketmq-console-ng ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 15 source files to C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target\test-classes
+[INFO]
+[INFO] --- maven-surefire-plugin:2.19.1:test (default-test) @ rocketmq-console-ng ---
+[INFO] Tests are skipped.
+[INFO]
+[INFO] --- maven-jar-plugin:2.6:jar (default-jar) @ rocketmq-console-ng ---
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-archiver/2.9/plexus-archiver-2.9.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-archiver/2.9/plexus-archiver-2.9.pom (4.4 kB at 5.4 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-io/2.4/plexus-io-2.4.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-io/2.4/plexus-io-2.4.pom (3.7 kB at 9.8 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-archiver/2.9/plexus-archiver-2.9.jar
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/commons/commons-compress/1.9/commons-compress-1.9.jar
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-io/2.4/plexus-io-2.4.jar
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-archiver/2.9/plexus-archiver-2.9.jar (145 kB at 276 kB/s)
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/codehaus/plexus/plexus-io/2.4/plexus-io-2.4.jar (81 kB at 146 kB/s)
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/commons/commons-compress/1.9/commons-compress-1.9.jar (378 kB at 491 kB/s)
+[INFO] Building jar: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target\rocketmq-console-ng-1.0.0.jar
+[INFO]
+[INFO] --- spring-boot-maven-plugin:1.4.3.RELEASE:repackage (default) @ rocketmq-console-ng ---
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/springframework/boot/spring-boot-loader-tools/1.4.3.RELEASE/spring-boot-loader-tools-1.4.3.RELEASE.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/springframework/boot/spring-boot-loader-tools/1.4.3.RELEASE/spring-boot-loader-tools-1.4.3.RELEASE.pom (3.8 kB at 9.9 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-aether-provider/3.2.1/maven-aether-provider-3.2.1.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-aether-provider/3.2.1/maven-aether-provider-3.2.1.pom (4.1 kB at 9.8 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-model-builder/3.2.1/maven-model-builder-3.2.1.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-model-builder/3.2.1/maven-model-builder-3.2.1.pom (2.8 kB at 9.4 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-repository-metadata/3.2.1/maven-repository-metadata-3.2.1.pom
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-repository-metadata/3.2.1/maven-repository-metadata-3.2.1.pom (2.2 kB at 5.4 kB/s)
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/springframework/boot/spring-boot-loader-tools/1.4.3.RELEASE/spring-boot-loader-tools-1.4.3.RELEASE.jar
+Downloading from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-aether-provider/3.2.1/maven-aether-provider-3.2.1.jar
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/apache/maven/maven-aether-provider/3.2.1/maven-aether-provider-3.2.1.jar (61 kB at 161 kB/s)
+Downloaded from alimaven: http://maven.aliyun.com/nexus/content/repositories/central/org/springframework/boot/spring-boot-loader-tools/1.4.3.RELEASE/spring-boot-loader-tools-1.4.3.RELEASE.jar (145 kB at 237 kB/s)
+[INFO]
+[INFO] >>> maven-source-plugin:3.0.1:jar (attach-sources) > generate-sources @ rocketmq-console-ng >>>
+[INFO]
+[INFO] --- maven-checkstyle-plugin:2.17:check (validate) @ rocketmq-console-ng ---
+[INFO] Starting audit...
+Audit done.
+[INFO]
+[INFO] --- jacoco-maven-plugin:0.7.9:prepare-agent (default-prepare-agent) @ rocketmq-console-ng ---
+[INFO] argLine set to -javaagent:C:\\Users\\mao\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.7.9\\org.jacoco.agent-0.7.9-runtime.jar=destfile=C:\\Users\\mao\\Desktop\\rocketmq-externals-rocketmq-console-1.0.0\\rocketmq-console\\target\\jacoco.exec
+[INFO]
+[INFO] <<< maven-source-plugin:3.0.1:jar (attach-sources) < generate-sources @ rocketmq-console-ng <<<
+[INFO]
+[INFO]
+[INFO] --- maven-source-plugin:3.0.1:jar (attach-sources) @ rocketmq-console-ng ---
+[INFO] Building jar: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target\rocketmq-console-ng-1.0.0-sources.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  21.584 s
+[INFO] Finished at: 2022-12-03T16:26:22+08:00
+[INFO] ------------------------------------------------------------------------
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console>
+```
+
+
+
+
+
+
+
+### 启动
+
+```sh
+java -jar rocketmq-console-ng-1.0.0.jar
+```
+
+
+
+```sh
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console> ls
+
+
+    目录: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2017/6/15     10:47                doc
+d-----         2017/6/15     10:47                src
+d-----         2017/6/15     10:47                style
+d-----         2022/12/3     16:26                target
+------         2017/6/15     10:47             23 .gitignore
+------         2017/6/15     10:47            322 .travis.yml
+------         2017/6/15     10:47          29843 LICENSE
+------         2017/6/15     10:47            176 NOTICE
+------         2017/6/15     10:47          11424 pom.xml
+------         2017/6/15     10:47           2169 README.md
+
+
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console> cd .\target\
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target> ls
+
+
+    目录: C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         2022/12/3     16:26                classes
+d-----         2022/12/3     16:26                generated-sources
+d-----         2022/12/3     16:26                generated-test-sources
+d-----         2022/12/3     16:26                maven-archiver
+d-----         2022/12/3     16:26                maven-status
+d-----         2022/12/3     16:26                test-classes
+-a----         2022/12/3     16:26          11081 checkstyle-cachefile
+-a----         2022/12/3     16:26           5852 checkstyle-checker.xml
+-a----         2022/12/3     16:26          10990 checkstyle-result.xml
+-a----         2022/12/3     16:26        3740409 rocketmq-console-ng-1.0.0-sources.jar
+-a----         2022/12/3     16:26       29611766 rocketmq-console-ng-1.0.0.jar
+-a----         2022/12/3     16:26        3765861 rocketmq-console-ng-1.0.0.jar.original
+
+
+PS C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target> java8 -jar .\rocketmq-console-ng-1.0.0.jar
+16:29:39,433 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.groovy]
+16:29:39,433 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+16:29:39,433 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [jar:file:/C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/target/rocketmq-console-ng-1.0.0.jar!/BOOT-INF/classes!/logback.xml]
+16:29:39,458 |-INFO in ch.qos.logback.core.joran.spi.ConfigurationWatchList@b1bc7ed - URL [jar:file:/C:/Users/mao/Desktop/rocketmq-externals-rocketmq-console-1.0.0/rocketmq-console/target/rocketmq-console-ng-1.0.0.jar!/BOOT-INF/classes!/logback.xml] is not of type file
+16:29:39,513 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - debug attribute not set
+16:29:39,524 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
+16:29:39,533 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [STDOUT]
+16:29:39,541 |-INFO in ch.qos.logback.core.joran.action.NestedComplexPropertyIA - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+16:29:39,592 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+16:29:39,595 |-INFO in ch.qos.logback.core.joran.action.AppenderAction - Naming appender as [FILE]
+16:29:39,616 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@2094548358 - No compression will be used
+16:29:39,618 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@2094548358 - Will use the pattern C:/Users/mao/logs/consolelogs/rocketmq-console-%d{yyyy-MM-dd}.%i.log for the active file
+16:29:39,621 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@30dae81 - The date pattern is 'yyyy-MM-dd' from file name pattern 'C:/Users/mao/logs/consolelogs/rocketmq-console-%d{yyyy-MM-dd}.%i.log'.
+16:29:39,621 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@30dae81 - Roll-over at midnight.
+16:29:39,624 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@30dae81 - Setting initial period to Sat Dec 03 16:29:03 CST 2022
+16:29:39,625 |-WARN in ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP@30dae81 - SizeAndTimeBasedFNATP is deprecated. Use SizeAndTimeBasedRollingPolicy instead
+16:29:39,628 |-INFO in ch.qos.logback.core.joran.action.NestedComplexPropertyIA - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+16:29:39,630 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: C:\Users\mao/logs/consolelogs/rocketmq-console.log
+16:29:39,630 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [C:\Users\mao/logs/consolelogs/rocketmq-console.log]
+16:29:39,631 |-INFO in ch.qos.logback.classic.joran.action.RootLoggerAction - Setting level of ROOT logger to INFO
+16:29:39,631 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [STDOUT] to Logger[ROOT]
+16:29:39,632 |-INFO in ch.qos.logback.core.joran.action.AppenderRefAction - Attaching appender named [FILE] to Logger[ROOT]
+16:29:39,632 |-INFO in ch.qos.logback.classic.joran.action.ConfigurationAction - End of configuration.
+16:29:39,633 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@1b2c6ec2 - Registering current configuration as safe fallback point
+
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v1.4.3.RELEASE)
+
+[2022-12-03 16:29:40.271]  INFO Starting App v1.0.0 on mao with PID 10420 (C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target\rocketmq-console-ng-1.0.0.jar started by mao in C:\Users\mao\Desktop\rocketmq-externals-rocketmq-console-1.0.0\rocketmq-console\target)
+[2022-12-03 16:29:40.275]  INFO No active profile set, falling back to default profiles: default
+[2022-12-03 16:29:40.357]  INFO Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@6477463f: startup date [Sat Dec 03 16:29:40 CST 2022]; root of context hierarchy
+[2022-12-03 16:29:40.408]  INFO HV000001: Hibernate Validator 5.2.4.Final
+[2022-12-03 16:29:42.758]  INFO Tomcat initialized with port(s): 8080 (http)
+[2022-12-03 16:29:42.773]  INFO Starting service Tomcat
+[2022-12-03 16:29:42.775]  INFO Starting Servlet Engine: Apache Tomcat/8.5.6
+[2022-12-03 16:29:42.855]  INFO Initializing Spring embedded WebApplicationContext
+[2022-12-03 16:29:42.855]  INFO Root WebApplicationContext: initialization completed in 2498 ms
+[2022-12-03 16:29:43.224]  INFO Mapping servlet: 'dispatcherServlet' to [/]
+[2022-12-03 16:29:43.230]  INFO Mapping filter: 'metricsFilter' to: [/*]
+[2022-12-03 16:29:43.230]  INFO Mapping filter: 'characterEncodingFilter' to: [/*]
+[2022-12-03 16:29:43.230]  INFO Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+[2022-12-03 16:29:43.231]  INFO Mapping filter: 'httpPutFormContentFilter' to: [/*]
+[2022-12-03 16:29:43.231]  INFO Mapping filter: 'requestContextFilter' to: [/*]
+[2022-12-03 16:29:43.232]  INFO Mapping filter: 'webRequestLoggingFilter' to: [/*]
+[2022-12-03 16:29:43.232]  INFO Mapping filter: 'applicationContextIdFilter' to: [/*]
+[2022-12-03 16:29:43.291]  INFO setNameSrvAddrByProperty nameSrvAddr=127.0.0.1:9876
+[2022-12-03 16:29:44.285]  INFO Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@6477463f: startup date [Sat Dec 03 16:29:40 CST 2022]; root of context hierarchy
+[2022-12-03 16:29:44.292]  INFO Detected ResponseBodyAdvice bean in globalRestfulResponseBodyAdvice
+[2022-12-03 16:29:44.402]  INFO Mapped "{[/cluster/brokerConfig.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ClusterController.brokerConfig(java.lang.String)
+[2022-12-03 16:29:44.404]  INFO Mapped "{[/cluster/list.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ClusterController.list()
+[2022-12-03 16:29:44.408]  INFO Mapped "{[/consumer/examineSubscriptionGroupConfig.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.examineSubscriptionGroupConfig(java.lang.String)
+[2022-12-03 16:29:44.409]  INFO Mapped "{[/consumer/createOrUpdate.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.consumerCreateOrUpdateRequest(org.apache.rocketmq.console.model.request.ConsumerConfigInfo)
+[2022-12-03 16:29:44.410]  INFO Mapped "{[/consumer/queryTopicByConsumer.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.queryConsumerByTopic(java.lang.String)
+[2022-12-03 16:29:44.410]  INFO Mapped "{[/consumer/consumerRunningInfo.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.getConsumerRunningInfo(java.lang.String,java.lang.String,boolean)
+[2022-12-03 16:29:44.411]  INFO Mapped "{[/consumer/fetchBrokerNameList.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.fetchBrokerNameList(java.lang.String)
+[2022-12-03 16:29:44.411]  INFO Mapped "{[/consumer/consumerConnection.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.consumerConnection(java.lang.String)
+[2022-12-03 16:29:44.412]  INFO Mapped "{[/consumer/resetOffset.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.resetOffset(org.apache.rocketmq.console.model.request.ResetOffsetRequest)
+[2022-12-03 16:29:44.413]  INFO Mapped "{[/consumer/deleteSubGroup.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.deleteSubGroup(org.apache.rocketmq.console.model.request.DeleteSubGroupRequest)
+[2022-12-03 16:29:44.413]  INFO Mapped "{[/consumer/group.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.groupQuery(java.lang.String)
+[2022-12-03 16:29:44.414]  INFO Mapped "{[/consumer/groupList.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ConsumerController.list()
+[2022-12-03 16:29:44.415]  INFO Mapped "{[/dashboard/topic.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.DashboardController.topic(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.416]  INFO Mapped "{[/dashboard/topicCurrent],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.DashboardController.topicCurrent()
+[2022-12-03 16:29:44.416]  INFO Mapped "{[/dashboard/broker.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.DashboardController.broker(java.lang.String)
+[2022-12-03 16:29:44.420]  INFO Mapped "{[/message/consumeMessageDirectly.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MessageController.consumeMessageDirectly(java.lang.String,java.lang.String,java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.420]  INFO Mapped "{[/message/queryMessageByTopicAndKey.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MessageController.queryMessageByTopicAndKey(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.421]  INFO Mapped "{[/message/queryMessageByTopic.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MessageController.queryMessageByTopic(java.lang.String,long,long)
+[2022-12-03 16:29:44.421]  INFO Mapped "{[/message/viewMessage.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MessageController.viewMessage(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.422]  INFO Mapped "{[/monitor/deleteConsumerMonitor.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MonitorController.deleteConsumerMonitor(java.lang.String)
+[2022-12-03 16:29:44.423]  INFO Mapped "{[/monitor/consumerMonitorConfig.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MonitorController.consumerMonitorConfig()
+[2022-12-03 16:29:44.423]  INFO Mapped "{[/monitor/createOrUpdateConsumerMonitor.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MonitorController.createOrUpdateConsumerMonitor(java.lang.String,int,int)
+[2022-12-03 16:29:44.423]  INFO Mapped "{[/monitor/consumerMonitorConfigByGroupName.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.MonitorController.consumerMonitorConfigByGroupName(java.lang.String)
+[2022-12-03 16:29:44.424]  INFO Mapped "{[/rocketmq/nsaddr],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.NamesvrController.nsaddr()
+[2022-12-03 16:29:44.425]  INFO Mapped "{[/ops/updateNameSvrAddr.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.OpsController.updateNameSvrAddr(java.lang.String)
+[2022-12-03 16:29:44.425]  INFO Mapped "{[/ops/updateIsVIPChannel.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.OpsController.updateIsVIPChannel(java.lang.String)
+[2022-12-03 16:29:44.425]  INFO Mapped "{[/ops/homePage.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.OpsController.homePage()
+[2022-12-03 16:29:44.426]  INFO Mapped "{[/ops/rocketMqStatus.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.OpsController.clusterStatus()
+[2022-12-03 16:29:44.427]  INFO Mapped "{[/producer/producerConnection.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.ProducerController.producerConnection(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.427]  INFO Mapped "{[/test/runTask.do],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TestController.list() throws org.apache.rocketmq.client.exception.MQClientException,org.apache.rocketmq.remoting.exception.RemotingException,java.lang.InterruptedException
+[2022-12-03 16:29:44.429]  INFO Mapped "{[/topic/queryConsumerByTopic.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.queryConsumerByTopic(java.lang.String)
+[2022-12-03 16:29:44.429]  INFO Mapped "{[/topic/queryTopicConsumerInfo.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.queryTopicConsumerInfo(java.lang.String)
+[2022-12-03 16:29:44.430]  INFO Mapped "{[/topic/deleteTopicByBroker.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.deleteTopicByBroker(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.430]  INFO Mapped "{[/topic/examineTopicConfig.query]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.examineTopicConfig(java.lang.String,java.lang.String) throws org.apache.rocketmq.remoting.exception.RemotingException,org.apache.rocketmq.client.exception.MQClientException,java.lang.InterruptedException
+[2022-12-03 16:29:44.430]  INFO Mapped "{[/topic/createOrUpdate.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.topicCreateOrUpdateRequest(org.apache.rocketmq.console.model.request.TopicConfigInfo)
+[2022-12-03 16:29:44.431]  INFO Mapped "{[/topic/stats.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.stats(java.lang.String)
+[2022-12-03 16:29:44.431]  INFO Mapped "{[/topic/route.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.route(java.lang.String)
+[2022-12-03 16:29:44.432]  INFO Mapped "{[/topic/sendTopicMessage.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.sendTopicMessage(org.apache.rocketmq.console.model.request.SendTopicMessageRequest) throws org.apache.rocketmq.remoting.exception.RemotingException,org.apache.rocketmq.client.exception.MQClientException,java.lang.InterruptedException
+[2022-12-03 16:29:44.433]  INFO Mapped "{[/topic/deleteTopic.do],methods=[POST]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.delete(java.lang.String,java.lang.String)
+[2022-12-03 16:29:44.437]  INFO Mapped "{[/topic/list.query],methods=[GET]}" onto public java.lang.Object org.apache.rocketmq.console.controller.TopicController.list() throws org.apache.rocketmq.client.exception.MQClientException,org.apache.rocketmq.remoting.exception.RemotingException,java.lang.InterruptedException
+[2022-12-03 16:29:44.438]  INFO Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+[2022-12-03 16:29:44.439]  INFO Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+[2022-12-03 16:29:44.524]  INFO Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+[2022-12-03 16:29:44.525]  INFO Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+[2022-12-03 16:29:44.550]  INFO Detected @ExceptionHandler methods in globalExceptionHandler
+[2022-12-03 16:29:44.550]  INFO Detected ResponseBodyAdvice implementation in globalRestfulResponseBodyAdvice
+[2022-12-03 16:29:44.599]  INFO Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+[2022-12-03 16:29:44.647]  INFO Adding welcome page: class path resource [static/index.html]
+[2022-12-03 16:29:45.174]  INFO Mapped "{[/beans || /beans.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.176]  INFO Mapped "{[/heapdump || /heapdump.json],methods=[GET],produces=[application/octet-stream]}" onto public void org.springframework.boot.actuate.endpoint.mvc.HeapdumpMvcEndpoint.invoke(boolean,javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse) throws java.io.IOException,javax.servlet.ServletException
+[2022-12-03 16:29:45.177]  INFO Mapped "{[/mappings || /mappings.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.177]  INFO Mapped "{[/dump || /dump.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.178]  INFO Mapped "{[/info || /info.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.179]  INFO Mapped "{[/trace || /trace.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.180]  INFO Mapped "{[/metrics/{name:.*}],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.MetricsMvcEndpoint.value(java.lang.String)
+[2022-12-03 16:29:45.181]  INFO Mapped "{[/metrics || /metrics.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.182]  INFO Mapped "{[/autoconfig || /autoconfig.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.184]  INFO Mapped "{[/env/{name:.*}],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EnvironmentMvcEndpoint.value(java.lang.String)
+[2022-12-03 16:29:45.185]  INFO Mapped "{[/env || /env.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.185]  INFO Mapped "{[/health || /health.json],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.HealthMvcEndpoint.invoke(java.security.Principal)
+[2022-12-03 16:29:45.186]  INFO Mapped "{[/configprops || /configprops.json],methods=[GET],produces=[application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter.invoke()
+[2022-12-03 16:29:45.325]  INFO Registering beans for JMX exposure on startup
+[2022-12-03 16:29:45.333]  INFO Registering beans for JMX exposure on startup
+[2022-12-03 16:29:45.340]  INFO Starting beans in phase 0
+[2022-12-03 16:29:45.350]  INFO Located managed bean 'requestMappingEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=requestMappingEndpoint]
+[2022-12-03 16:29:45.385]  INFO Located managed bean 'environmentEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=environmentEndpoint]
+[2022-12-03 16:29:45.391]  INFO Located managed bean 'healthEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=healthEndpoint]
+[2022-12-03 16:29:45.394]  INFO Located managed bean 'beansEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=beansEndpoint]
+[2022-12-03 16:29:45.400]  INFO Located managed bean 'infoEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=infoEndpoint]
+[2022-12-03 16:29:45.403]  INFO Located managed bean 'metricsEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=metricsEndpoint]
+[2022-12-03 16:29:45.406]  INFO Located managed bean 'traceEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=traceEndpoint]
+[2022-12-03 16:29:45.408]  INFO Located managed bean 'dumpEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=dumpEndpoint]
+[2022-12-03 16:29:45.414]  INFO Located managed bean 'autoConfigurationReportEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=autoConfigurationReportEndpoint]
+[2022-12-03 16:29:45.417]  INFO Located managed bean 'configurationPropertiesReportEndpoint': registering with JMX server as MBean [org.springframework.boot:type=Endpoint,name=configurationPropertiesReportEndpoint]
+[2022-12-03 16:29:45.430]  INFO No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+[2022-12-03 16:29:45.447]  INFO Initializing ProtocolHandler ["http-nio-8080"]
+[2022-12-03 16:29:45.462]  INFO Starting ProtocolHandler [http-nio-8080]
+[2022-12-03 16:29:45.476]  INFO Using a shared selector for servlet write/read
+[2022-12-03 16:29:45.497]  INFO Tomcat started on port(s): 8080 (http)
+[2022-12-03 16:29:45.502]  INFO Started App in 5.727 seconds (JVM running for 6.463)
+```
+
+
+
+
+
+
+
+### 访问
+
+http://localhost:8080
+
+
+
+![image-20221203163536728](img/RocketMQ学习笔记/image-20221203163536728.png)
+
+
+
+![image-20221203163548532](img/RocketMQ学习笔记/image-20221203163548532.png)
+
+![image-20221203163555474](img/RocketMQ学习笔记/image-20221203163555474.png)
+
+
+
+
+
+![image-20221203163644447](img/RocketMQ学习笔记/image-20221203163644447.png)
+
+
+
+
+
+![image-20221203163654681](img/RocketMQ学习笔记/image-20221203163654681.png)
+
+
+
+
+
+![image-20221203163834981](img/RocketMQ学习笔记/image-20221203163834981.png)
+
+
+
+
+
+![image-20221203163856493](img/RocketMQ学习笔记/image-20221203163856493.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 命令介绍
+
