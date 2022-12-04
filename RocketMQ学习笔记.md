@@ -3524,3 +3524,235 @@ hello82
 
 #### 广播模式
 
+消费者采用广播的方式消费消息，每个消费者消费的消息都是相同的
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_基本消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): BroadcastConsumer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/4
+ * Time(创建时间)： 15:25
+ * Version(版本): 1.0
+ * Description(描述)： 消费者-广播模式
+ */
+
+public class BroadcastConsumer
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //创建消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //订阅topic
+        defaultMQPushConsumer.subscribe("test_topic", "*");
+        //设置消费模式-负载均衡
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //注册监听器，处理消息
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                //打印
+                System.out.println("线程" + Thread.currentThread().getName() + "消费消息：" + list);
+                //返回成功的状态
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动消费者
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+**测试广播模式**
+
+
+
+复制配置
+
+![image-20221204153752945](img/RocketMQ学习笔记/image-20221204153752945.png)
+
+
+
+
+
+启动消费者
+
+![image-20221204153832786](img/RocketMQ学习笔记/image-20221204153832786.png)
+
+
+
+
+
+启动生产者
+
+![image-20221204153924595](img/RocketMQ学习笔记/image-20221204153924595.png)
+
+
+
+
+
+第一个消费者
+
+```sh
+hello0
+hello1
+hello2
+hello3
+hello4
+hello5
+hello6
+hello7
+hello8
+hello9
+hello10
+hello11
+hello12
+hello13
+hello14
+hello15
+hello16
+hello17
+hello18
+hello19
+hello20
+hello21
+hello22
+hello23
+hello24
+hello25
+hello26
+hello27
+hello28
+.......
+```
+
+
+
+![image-20221204154002079](img/RocketMQ学习笔记/image-20221204154002079.png)
+
+
+
+
+
+第二个消费者
+
+```sh
+hello0
+hello1
+hello2
+hello3
+hello4
+hello5
+hello6
+hello7
+hello8
+hello9
+hello10
+hello11
+hello12
+hello13
+hello14
+hello15
+hello16
+hello17
+hello18
+hello19
+hello20
+hello21
+hello22
+hello23
+hello24
+......
+```
+
+
+
+![image-20221204154028951](img/RocketMQ学习笔记/image-20221204154028951.png)
+
+
+
+
+
+第三个消费者
+
+```sh
+hello0
+hello1
+hello2
+hello3
+hello4
+hello5
+hello6
+hello7
+hello8
+hello9
+hello10
+hello11
+hello12
+hello13
+hello14
+hello15
+hello16
+hello17
+hello18
+hello19
+hello20
+hello21
+hello22
+hello23
+hello24
+hello25
+hello26
+hello27
+hello28
+hello29
+......
+```
+
+
+
+![image-20221204154101015](img/RocketMQ学习笔记/image-20221204154101015.png)
+
+
+
+
+
+消息会被每一个消费者消费
+
+
+
+
+
+
+
+
+
+
+
+## 顺序消息
+
