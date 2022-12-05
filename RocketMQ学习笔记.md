@@ -3756,3 +3756,299 @@ hello29
 
 ## 顺序消息
 
+消息有序指的是可以按照消息的发送顺序来消费(FIFO)。RocketMQ可以严格的保证消息有序，可以分为分区有序或者全局有序。
+
+顺序消费的原理解析，在默认的情况下消息发送会采取Round Robin轮询方式把消息发送到不同的queue(分区队列)；而消费消息的时候从多个queue上拉取消息，这种情况发送和消费是不能保证顺序。但是如果控制发送的顺序消息只依次发送到同一个queue中，消费的时候只从这个queue上依次拉取，则就保证了顺序。当发送和消费参与的queue只有一个，则是全局有序；如果多个queue参与，则为分区有序，即相对每个queue，消息都是有序的。
+
+
+
+
+
+### 生产
+
+
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_顺序消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): SequentialProducer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/5
+ * Time(创建时间)： 13:34
+ * Version(版本): 1.0
+ * Description(描述)： 顺序消息-生产者
+ */
+
+public class SequentialProducer
+{
+    /**
+     * 简单日期格式
+     */
+    static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+
+    public static void main(String[] args)
+            throws MQClientException, MQBrokerException, RemotingException, InterruptedException
+    {
+        //生产者
+        DefaultMQProducer defaultMQProducer = new DefaultMQProducer("mao_group");
+        //设置nameserver地址
+        defaultMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //启动生产者
+        defaultMQProducer.start();
+        //发送300条顺序消息
+        for (int i = 0; i < 300; i++)
+        {
+            //消息体
+            String messageBody = simpleDateFormat.format(new Date()) + " --> 消息" + i;
+            //消息对象
+            Message message = new Message("test_topic", messageBody.getBytes(StandardCharsets.UTF_8));
+            defaultMQProducer.send(message, new MessageQueueSelector()
+            {
+                /**
+                 * 选择发送的队列
+                 *
+                 * @param list    列表
+                 * @param message 消息
+                 * @param o       o
+                 * @return {@link MessageQueue}
+                 */
+                @Override
+                public MessageQueue select(List<MessageQueue> list, Message message, Object o)
+                {
+                    System.out.println(messageBody + "  发送到0号队列，队列总数：" + list.size());
+                    return list.get(0);
+                }
+            }, i);
+        }
+        //关闭
+        defaultMQProducer.shutdown();
+    }
+}
+```
+
+
+
+
+
+```sh
+13:54:23 --> 消息0  发送到0号队列，队列总数：8
+13:54:23 --> 消息1  发送到0号队列，队列总数：8
+13:54:23 --> 消息2  发送到0号队列，队列总数：8
+13:54:23 --> 消息3  发送到0号队列，队列总数：8
+13:54:23 --> 消息4  发送到0号队列，队列总数：8
+13:54:23 --> 消息5  发送到0号队列，队列总数：8
+13:54:23 --> 消息6  发送到0号队列，队列总数：8
+13:54:23 --> 消息7  发送到0号队列，队列总数：8
+13:54:23 --> 消息8  发送到0号队列，队列总数：8
+13:54:23 --> 消息9  发送到0号队列，队列总数：8
+13:54:23 --> 消息10  发送到0号队列，队列总数：8
+13:54:23 --> 消息11  发送到0号队列，队列总数：8
+13:54:23 --> 消息12  发送到0号队列，队列总数：8
+13:54:23 --> 消息13  发送到0号队列，队列总数：8
+13:54:23 --> 消息14  发送到0号队列，队列总数：8
+13:54:23 --> 消息15  发送到0号队列，队列总数：8
+13:54:23 --> 消息16  发送到0号队列，队列总数：8
+13:54:23 --> 消息17  发送到0号队列，队列总数：8
+13:54:23 --> 消息18  发送到0号队列，队列总数：8
+13:54:23 --> 消息19  发送到0号队列，队列总数：8
+13:54:23 --> 消息20  发送到0号队列，队列总数：8
+13:54:23 --> 消息21  发送到0号队列，队列总数：8
+13:54:23 --> 消息22  发送到0号队列，队列总数：8
+13:54:23 --> 消息23  发送到0号队列，队列总数：8
+13:54:23 --> 消息24  发送到0号队列，队列总数：8
+13:54:23 --> 消息25  发送到0号队列，队列总数：8
+13:54:23 --> 消息26  发送到0号队列，队列总数：8
+13:54:23 --> 消息27  发送到0号队列，队列总数：8
+13:54:23 --> 消息28  发送到0号队列，队列总数：8
+13:54:23 --> 消息29  发送到0号队列，队列总数：8
+13:54:23 --> 消息30  发送到0号队列，队列总数：8
+13:54:23 --> 消息31  发送到0号队列，队列总数：8
+13:54:23 --> 消息32  发送到0号队列，队列总数：8
+13:54:23 --> 消息33  发送到0号队列，队列总数：8
+......
+```
+
+
+
+
+
+
+
+### 消费
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_顺序消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): SequentialConsumer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/5
+ * Time(创建时间)： 13:57
+ * Version(版本): 1.0
+ * Description(描述)： 消费者-顺序消息
+ */
+
+public class SequentialConsumer
+{
+    /**
+     * 得到int随机
+     *
+     * @param min 最小值
+     * @param max 最大值
+     * @return int
+     */
+    public static int getIntRandom(int min, int max)
+    {
+        if (min > max)
+        {
+            min = max;
+        }
+        return min + (int) (Math.random() * (max - min + 1));
+    }
+
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-负载均衡
+        defaultMQPushConsumer.setMessageModel(MessageModel.CLUSTERING);
+        //设置消费的主题
+        defaultMQPushConsumer.subscribe("test_topic", "*");
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerOrderly()
+        {
+            @Override
+            public ConsumeOrderlyStatus consumeMessage(List<MessageExt> list, ConsumeOrderlyContext consumeOrderlyContext)
+            {
+                //线程
+                Thread currentThread = Thread.currentThread();
+                //打印，每个queue有唯一的consume线程来消费, 订单对每个queue(分区)有序
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println("当前线程：" + currentThread.getName() + "   " + "队列id：" + messageExt.getQueueId()
+                            + "      " + "消息：" + new String(messageExt.getBody(),
+                            StandardCharsets.UTF_8));
+                    try
+                    {
+                        Thread.sleep(getIntRandom(100, 1000));
+                    }
+                    catch (InterruptedException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                //返回成功
+                return ConsumeOrderlyStatus.SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+```sh
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:55 --> 消息0
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息1
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息2
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息3
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息4
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息5
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息6
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息7
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息8
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息9
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息10
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息11
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息12
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息13
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息14
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息15
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息16
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息17
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息18
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息19
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息20
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息21
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息22
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息23
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息24
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息25
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息26
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息27
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息28
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息29
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息30
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息31
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息32
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息33
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息34
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息35
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息36
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息37
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息38
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息39
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息40
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息41
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息42
+当前线程：ConsumeMessageThread_mao_group_1   队列id：0      消息：14:14:56 --> 消息43
+......
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 延时消息
+
