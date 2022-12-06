@@ -4644,5 +4644,504 @@ public class DelayProducer2
 
 
 
+
+
 ## 批量消息
+
+批量发送消息能显著提高传递小消息的性能。限制是这些批量消息应该有相同的topic，相同的waitStoreMsgOK，而且不能是延时消息。此外，这一批消息的总大小不应超过4MB。
+
+
+
+
+
+### 生产
+
+
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.common.message.Message;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Project name(项目名称)：RocketMQ_批量消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): ListSplitter
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/6
+ * Time(创建时间)： 14:14
+ * Version(版本): 1.0
+ * Description(描述)： 将消息拆分，没次遍历得到的list集合的数据大小不大于4M
+ */
+
+public class ListSplitter implements Iterator<List<Message>>
+{
+
+    /**
+     * 大小限制
+     */
+    private static final int SIZE_LIMIT = 1000 * 40;
+
+    /**
+     * 消息列表
+     */
+    private final List<Message> messages;
+
+    /**
+     * 当前索引位置
+     */
+    private int currIndex;
+
+    /**
+     * 构造方法
+     *
+     * @param messages 消息列表
+     */
+    public ListSplitter(List<Message> messages)
+    {
+        this.messages = messages;
+    }
+
+    @Override
+    public boolean hasNext()
+    {
+        return currIndex < messages.size();
+    }
+
+    /**
+     * 下一个
+     *
+     * @return {@link List}<{@link Message}>
+     */
+    @Override
+    public List<Message> next()
+    {
+        //当前的起始索引
+        int nextIndex = currIndex;
+        //当前的总大小
+        int totalSize = 0;
+        //遍历
+        for (; nextIndex < messages.size(); nextIndex++)
+        {
+            //取到消息对象
+            Message message = messages.get(nextIndex);
+            //计算当前消息对象的大小
+            int tmpSize = message.getTopic().length() + message.getBody().length;
+            //消息属性
+            Map<String, String> messageProperties = message.getProperties();
+            //遍历属性
+            for (Map.Entry<String, String> entry : messageProperties.entrySet())
+            {
+                //计算属性的大小，添加进tmpSize
+                tmpSize += entry.getKey().length() + entry.getValue().length();
+            }
+            //日志-20字节
+            tmpSize = tmpSize + 20;
+            //判断当前大小(当前一个消息的大小)是否超过了限制的最大大小
+            if (tmpSize > SIZE_LIMIT)
+            {
+                //超过了限制的最大大小
+                if (nextIndex - currIndex == 0)
+                {
+                    //假如下一个子列表没有元素,则添加这个子列表然后退出循环,否则只是退出循环
+                    nextIndex++;
+                }
+                break;
+            }
+            //当前遍历的总大小加上这次遍历的大小大于限制的大小
+            if (tmpSize + totalSize > SIZE_LIMIT)
+            {
+                //直接退出循环
+                break;
+            }
+            else
+            {
+                //当前遍历的总大小加上这次遍历的大小没有大于限制的大小
+                //继续遍历
+                totalSize += tmpSize;
+            }
+        }
+        //生成列表并返回
+        List<Message> subList = messages.subList(currIndex, nextIndex);
+        currIndex = nextIndex;
+        return subList;
+    }
+}
+
+```
+
+
+
+
+
+
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_批量消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): BulkProducer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/6
+ * Time(创建时间)： 14:34
+ * Version(版本): 1.0
+ * Description(描述)： 批量消息-生产者
+ */
+
+public class BulkProducer
+{
+    /**
+     * 得到int随机
+     *
+     * @param min 最小值
+     * @param max 最大值
+     * @return int
+     */
+    public static int getIntRandom(int min, int max)
+    {
+        if (min > max)
+        {
+            min = max;
+        }
+        return min + (int) (Math.random() * (max - min + 1));
+    }
+
+    public static String getBody()
+    {
+        StringBuilder stringBuilder = new StringBuilder(2000);
+        for (int i = 0; i < getIntRandom(10, 500); i++)
+        {
+            stringBuilder.append(Integer.toBinaryString(getIntRandom(2000, 80000)));
+        }
+        return stringBuilder.toString();
+    }
+
+
+    public static void main(String[] args)
+            throws MQClientException, MQBrokerException, RemotingException, InterruptedException
+    {
+        List<Message> messageList = new ArrayList<>(1000);
+        for (int i = 0; i < 1000; i++)
+        {
+            Message message = new Message("test_topic", getBody().getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        ListSplitter listSplitter = new ListSplitter(messageList);
+        int i = 1;
+        int position = 0;
+        List<List<Message>> bulkMessageList = new ArrayList<>();
+        while (listSplitter.hasNext())
+        {
+            System.out.println("-------------------------");
+            System.out.println("第" + i + "次遍历");
+            List<Message> messages = listSplitter.next();
+            System.out.println("列表大小：" + messages.size());
+            System.out.println("位置：" + position + "-" + (position + messages.size() - 1));
+            System.out.println("-------------------------");
+            i++;
+            position = position + messages.size();
+            bulkMessageList.add(messages);
+        }
+
+
+        System.out.println();
+        System.out.println("开始发送批量消息");
+
+        //生产者
+        DefaultMQProducer defaultMQProducer = new DefaultMQProducer("mao_group");
+        //设置nameserver地址
+        defaultMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //启动
+        defaultMQProducer.start();
+        //发送批量消息
+        for (int i1 = 0; i1 < bulkMessageList.size(); i1++)
+        {
+            System.out.println("-------------------------");
+            List<Message> messages = bulkMessageList.get(i1);
+            System.out.println("正在发送第" + (i1 + 1) + "批消息");
+            System.out.println("列表大小：" + messages.size());
+            SendResult sendResult = defaultMQProducer.send(messages);
+            //System.out.println("发送完成，发送结果：" + sendResult);
+            System.out.println("-------------------------");
+        }
+        System.out.println("完成");
+        defaultMQProducer.shutdown();
+    }
+}
+```
+
+
+
+
+
+### 消费
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_批量消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): BulkConsumer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/6
+ * Time(创建时间)： 15:26
+ * Version(版本): 1.0
+ * Description(描述)： 消费者
+ */
+
+public class BulkConsumer
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", "*");
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                    System.out.println();
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+### 启动
+
+
+
+如果设置成4M，将会出现以下异常
+
+```sh
+Exception in thread "main" org.apache.rocketmq.client.exception.MQBrokerException: CODE: 13  DESC: the message is illegal, maybe msg body or properties length not matched. msg body length limit 128k, msg properties length limit 32k. BROKER: 113.221.235.60:10911
+```
+
+
+
+
+
+生产者
+
+```sh
+-------------------------
+第1次遍历
+列表大小：72
+位置：0-71
+-------------------------
+-------------------------
+第2次遍历
+列表大小：70
+位置：72-141
+-------------------------
+-------------------------
+第3次遍历
+列表大小：62
+位置：142-203
+-------------------------
+-------------------------
+第4次遍历
+列表大小：66
+位置：204-269
+-------------------------
+-------------------------
+第5次遍历
+列表大小：64
+位置：270-333
+-------------------------
+-------------------------
+第6次遍历
+列表大小：67
+位置：334-400
+-------------------------
+-------------------------
+第7次遍历
+列表大小：63
+位置：401-463
+-------------------------
+-------------------------
+第8次遍历
+列表大小：64
+位置：464-527
+-------------------------
+-------------------------
+第9次遍历
+列表大小：62
+位置：528-589
+-------------------------
+-------------------------
+第10次遍历
+列表大小：67
+位置：590-656
+-------------------------
+-------------------------
+第11次遍历
+列表大小：59
+位置：657-715
+-------------------------
+-------------------------
+第12次遍历
+列表大小：69
+位置：716-784
+-------------------------
+-------------------------
+第13次遍历
+列表大小：70
+位置：785-854
+-------------------------
+-------------------------
+第14次遍历
+列表大小：66
+位置：855-920
+-------------------------
+-------------------------
+第15次遍历
+列表大小：69
+位置：921-989
+-------------------------
+-------------------------
+第16次遍历
+列表大小：10
+位置：990-999
+-------------------------
+
+开始发送批量消息
+-------------------------
+正在发送第1批消息
+列表大小：72
+-------------------------
+-------------------------
+正在发送第2批消息
+列表大小：70
+-------------------------
+-------------------------
+正在发送第3批消息
+列表大小：62
+-------------------------
+-------------------------
+正在发送第4批消息
+列表大小：66
+-------------------------
+-------------------------
+正在发送第5批消息
+列表大小：64
+-------------------------
+-------------------------
+正在发送第6批消息
+列表大小：67
+-------------------------
+-------------------------
+正在发送第7批消息
+列表大小：63
+-------------------------
+-------------------------
+正在发送第8批消息
+列表大小：64
+-------------------------
+-------------------------
+正在发送第9批消息
+列表大小：62
+-------------------------
+-------------------------
+正在发送第10批消息
+列表大小：67
+-------------------------
+-------------------------
+正在发送第11批消息
+列表大小：59
+-------------------------
+-------------------------
+正在发送第12批消息
+列表大小：69
+-------------------------
+-------------------------
+正在发送第13批消息
+列表大小：70
+-------------------------
+-------------------------
+正在发送第14批消息
+列表大小：66
+-------------------------
+-------------------------
+正在发送第15批消息
+列表大小：69
+-------------------------
+-------------------------
+正在发送第16批消息
+列表大小：10
+-------------------------
+完成
+```
+
+
+
+
+
+
+
+
+
+
+
+## 过滤消息
+
+
+
+
+
+
+
+
 
