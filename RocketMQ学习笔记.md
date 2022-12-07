@@ -2,8 +2,6 @@
 
 
 
-
-
 # MQ介绍
 
 ## 为什么要用MQ
@@ -5137,7 +5135,582 @@ Exception in thread "main" org.apache.rocketmq.client.exception.MQBrokerExceptio
 
 ## 过滤消息
 
+在大多数情况下，TAG是一个简单而有用的设计，其可以来选择您想要的消息
 
+如：
+
+```java
+consumer.subscribe("TOPIC", "TAGA || TAGB || TAGC");
+```
+
+
+
+消费者将接收包含TAGA或TAGB或TAGC的消息。但是限制是一个消息只能有一个标签，这对于复杂的场景可能不起作用。在这种情况下，可以使用SQL表达式筛选消息。SQL特性可以通过发送消息时的属性来进行计算。在RocketMQ定义的语法下，可以实现一些简单的逻辑
+
+
+
+
+
+
+
+### SQL基本语法
+
+RocketMQ只定义了一些基本语法来支持这个特性。你也可以很容易地扩展它。
+
+* 数值比较，比如：**>，>=，<，<=，BETWEEN，=；**
+* 字符比较，比如：**=，<>，IN；**
+* **IS NULL** 或者 **IS NOT NULL；**
+* 逻辑符号 **AND，OR，NOT；**
+
+常量支持类型为：
+
+* 数值，比如：**123，3.1415；**
+* 字符，比如：**'abc'，必须用单引号包裹起来；**
+* **NULL**，特殊的常量
+* 布尔值，**TRUE** 或 **FALSE**
+
+
+
+只有使用push模式的消费者才能用使用SQL92标准的sql语句，接口如下：
+
+```java
+public void subscribe(finalString topic, final MessageSelector messageSelector)
+```
+
+
+
+
+
+
+
+### 消息生产者
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): FilterProducer1
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:16
+ * Version(版本): 1.0
+ * Description(描述)： 生产者
+ */
+
+public class FilterProducer1
+{
+    /**
+     * 标签数组
+     */
+    private static final String[] TAGS = {"tag1", "tag2", "tag3", "tag4", "tag5"};
+
+
+    public static void main(String[] args)
+            throws MQClientException, MQBrokerException, RemotingException, InterruptedException
+    {
+        //生产者
+        DefaultMQProducer defaultMQProducer = new DefaultMQProducer("mao_group");
+        //nameserver地址
+        defaultMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //启动
+        defaultMQProducer.start();
+        //发送消息
+        for (int i = 0; i < 100; i++)
+        {
+            //标签
+            String tag = TAGS[i % (TAGS.length)];
+            //消息体字符串
+            String msg = "消息" + i + "     消息标签：" + tag;
+            //消息对象
+            Message message = new Message("test_topic", tag, msg.getBytes(StandardCharsets.UTF_8));
+            //打印
+            System.out.println(msg);
+            //发送消息
+            defaultMQProducer.send(message);
+        }
+        //关闭
+        defaultMQProducer.shutdown();
+    }
+}
+```
+
+
+
+
+
+
+
+### 消息消费者
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer1
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:24
+ * Version(版本): 1.0
+ * Description(描述)： 消费者，消费标签为1和3的消息
+ */
+
+public class FilterConsumer1
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", "tag1 || tag3");
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer2
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:32
+ * Version(版本): 1.0
+ * Description(描述)： 消费者2，只消费标签为5的消息
+ */
+
+public class FilterConsumer2
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", "tag5");
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer3
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:34
+ * Version(版本): 1.0
+ * Description(描述)： 消费者，消费标签为1,2和4的消息
+ */
+
+public class FilterConsumer3
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", "tag1 || tag2 || tag4");
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+
+
+### 启动测试
+
+启动消费者1，再启动生产者
+
+
+
+生产者打印的信息：
+
+```sh
+消息0     消息标签：tag1
+消息1     消息标签：tag2
+消息2     消息标签：tag3
+消息3     消息标签：tag4
+消息4     消息标签：tag5
+消息5     消息标签：tag1
+消息6     消息标签：tag2
+消息7     消息标签：tag3
+消息8     消息标签：tag4
+消息9     消息标签：tag5
+消息10     消息标签：tag1
+消息11     消息标签：tag2
+消息12     消息标签：tag3
+消息13     消息标签：tag4
+消息14     消息标签：tag5
+消息15     消息标签：tag1
+消息16     消息标签：tag2
+消息17     消息标签：tag3
+消息18     消息标签：tag4
+消息19     消息标签：tag5
+消息20     消息标签：tag1
+消息21     消息标签：tag2
+消息22     消息标签：tag3
+消息23     消息标签：tag4
+消息24     消息标签：tag5
+消息25     消息标签：tag1
+消息26     消息标签：tag2
+消息27     消息标签：tag3
+消息28     消息标签：tag4
+消息29     消息标签：tag5
+消息30     消息标签：tag1
+消息31     消息标签：tag2
+消息32     消息标签：tag3
+消息33     消息标签：tag4
+消息34     消息标签：tag5
+消息35     消息标签：tag1
+消息36     消息标签：tag2
+消息37     消息标签：tag3
+消息38     消息标签：tag4
+消息39     消息标签：tag5
+消息40     消息标签：tag1
+消息41     消息标签：tag2
+消息42     消息标签：tag3
+消息43     消息标签：tag4
+消息44     消息标签：tag5
+消息45     消息标签：tag1
+消息46     消息标签：tag2
+消息47     消息标签：tag3
+消息48     消息标签：tag4
+消息49     消息标签：tag5
+消息50     消息标签：tag1
+消息51     消息标签：tag2
+消息52     消息标签：tag3
+消息53     消息标签：tag4
+消息54     消息标签：tag5
+消息55     消息标签：tag1
+消息56     消息标签：tag2
+消息57     消息标签：tag3
+消息58     消息标签：tag4
+消息59     消息标签：tag5
+消息60     消息标签：tag1
+消息61     消息标签：tag2
+消息62     消息标签：tag3
+消息63     消息标签：tag4
+消息64     消息标签：tag5
+消息65     消息标签：tag1
+消息66     消息标签：tag2
+消息67     消息标签：tag3
+消息68     消息标签：tag4
+消息69     消息标签：tag5
+消息70     消息标签：tag1
+消息71     消息标签：tag2
+消息72     消息标签：tag3
+消息73     消息标签：tag4
+消息74     消息标签：tag5
+消息75     消息标签：tag1
+消息76     消息标签：tag2
+消息77     消息标签：tag3
+消息78     消息标签：tag4
+消息79     消息标签：tag5
+消息80     消息标签：tag1
+消息81     消息标签：tag2
+消息82     消息标签：tag3
+消息83     消息标签：tag4
+消息84     消息标签：tag5
+消息85     消息标签：tag1
+消息86     消息标签：tag2
+消息87     消息标签：tag3
+消息88     消息标签：tag4
+消息89     消息标签：tag5
+消息90     消息标签：tag1
+消息91     消息标签：tag2
+消息92     消息标签：tag3
+消息93     消息标签：tag4
+消息94     消息标签：tag5
+消息95     消息标签：tag1
+消息96     消息标签：tag2
+消息97     消息标签：tag3
+消息98     消息标签：tag4
+消息99     消息标签：tag5
+```
+
+
+
+
+
+消费者1打印的信息
+
+```sh
+消息0     消息标签：tag1
+消息2     消息标签：tag3
+消息5     消息标签：tag1
+消息7     消息标签：tag3
+消息10     消息标签：tag1
+消息12     消息标签：tag3
+消息15     消息标签：tag1
+消息17     消息标签：tag3
+消息20     消息标签：tag1
+消息22     消息标签：tag3
+消息25     消息标签：tag1
+消息27     消息标签：tag3
+消息30     消息标签：tag1
+消息32     消息标签：tag3
+消息35     消息标签：tag1
+消息37     消息标签：tag3
+消息40     消息标签：tag1
+消息42     消息标签：tag3
+消息45     消息标签：tag1
+消息47     消息标签：tag3
+消息50     消息标签：tag1
+消息52     消息标签：tag3
+消息55     消息标签：tag1
+消息57     消息标签：tag3
+消息60     消息标签：tag1
+消息62     消息标签：tag3
+消息65     消息标签：tag1
+消息67     消息标签：tag3
+消息70     消息标签：tag1
+消息72     消息标签：tag3
+消息75     消息标签：tag1
+消息77     消息标签：tag3
+消息80     消息标签：tag1
+消息82     消息标签：tag3
+消息85     消息标签：tag1
+消息87     消息标签：tag3
+消息90     消息标签：tag1
+消息92     消息标签：tag3
+消息95     消息标签：tag1
+消息97     消息标签：tag3
+```
+
+
+
+
+
+关闭消费者1，启动消费者2，再启动生产者
+
+
+
+消费者2打印的信息
+
+```sh
+消息4     消息标签：tag5
+消息9     消息标签：tag5
+消息14     消息标签：tag5
+消息19     消息标签：tag5
+消息24     消息标签：tag5
+消息29     消息标签：tag5
+消息34     消息标签：tag5
+消息39     消息标签：tag5
+消息44     消息标签：tag5
+消息49     消息标签：tag5
+消息54     消息标签：tag5
+消息59     消息标签：tag5
+消息64     消息标签：tag5
+消息69     消息标签：tag5
+消息74     消息标签：tag5
+消息79     消息标签：tag5
+消息84     消息标签：tag5
+消息89     消息标签：tag5
+消息94     消息标签：tag5
+消息99     消息标签：tag5
+```
+
+
+
+
+
+关闭消费者2，启动消费者3，再启动生产者
+
+
+
+
+
+消费者3打印的信息
+
+```sh
+消息0     消息标签：tag1
+消息1     消息标签：tag2
+消息3     消息标签：tag4
+消息5     消息标签：tag1
+消息6     消息标签：tag2
+消息8     消息标签：tag4
+消息10     消息标签：tag1
+消息11     消息标签：tag2
+消息13     消息标签：tag4
+消息15     消息标签：tag1
+消息16     消息标签：tag2
+消息18     消息标签：tag4
+消息20     消息标签：tag1
+消息21     消息标签：tag2
+消息23     消息标签：tag4
+消息25     消息标签：tag1
+消息26     消息标签：tag2
+消息28     消息标签：tag4
+消息30     消息标签：tag1
+消息31     消息标签：tag2
+消息33     消息标签：tag4
+消息35     消息标签：tag1
+消息36     消息标签：tag2
+消息38     消息标签：tag4
+消息40     消息标签：tag1
+消息41     消息标签：tag2
+消息43     消息标签：tag4
+消息45     消息标签：tag1
+消息46     消息标签：tag2
+消息48     消息标签：tag4
+消息50     消息标签：tag1
+消息51     消息标签：tag2
+消息53     消息标签：tag4
+消息55     消息标签：tag1
+消息56     消息标签：tag2
+消息58     消息标签：tag4
+消息60     消息标签：tag1
+消息61     消息标签：tag2
+消息63     消息标签：tag4
+消息65     消息标签：tag1
+消息66     消息标签：tag2
+消息68     消息标签：tag4
+消息70     消息标签：tag1
+消息71     消息标签：tag2
+消息73     消息标签：tag4
+消息75     消息标签：tag1
+消息76     消息标签：tag2
+消息78     消息标签：tag4
+消息80     消息标签：tag1
+消息81     消息标签：tag2
+消息83     消息标签：tag4
+消息85     消息标签：tag1
+消息86     消息标签：tag2
+消息88     消息标签：tag4
+消息90     消息标签：tag1
+消息91     消息标签：tag2
+消息93     消息标签：tag4
+消息95     消息标签：tag1
+消息96     消息标签：tag2
+消息98     消息标签：tag4
+```
 
 
 
