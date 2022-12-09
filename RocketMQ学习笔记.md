@@ -5718,3 +5718,793 @@ public class FilterConsumer3
 
 
 
+
+
+### 消息生产者
+
+
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.remoting.exception.RemotingException;
+
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): FilterProducer2
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:51
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+public class FilterProducer2
+{
+    /**
+     * 得到int随机
+     *
+     * @param min 最小值
+     * @param max 最大值
+     * @return int
+     */
+    public static int getIntRandom(int min, int max)
+    {
+        if (min > max)
+        {
+            min = max;
+        }
+        return min + (int) (Math.random() * (max - min + 1));
+    }
+
+    public static void main(String[] args)
+            throws MQClientException, MQBrokerException, RemotingException, InterruptedException
+    {
+        //生产者
+        DefaultMQProducer defaultMQProducer = new DefaultMQProducer("mao_group");
+        //nameserver地址
+        defaultMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //启动
+        defaultMQProducer.start();
+        //发送消息
+        for (int i = 0; i < 100; i++)
+        {
+            //属性
+            int a = getIntRandom(0, 10);
+            int b = getIntRandom(0, 20);
+            //消息体字符串
+            String msg = "消息" + i + "     属性a：" + a + "     属性b：" + b;
+            //消息对象
+            Message message = new Message("test_topic", msg.getBytes(StandardCharsets.UTF_8));
+            //填充属性
+            message.putUserProperty("a", String.valueOf(a));
+            message.putUserProperty("b", String.valueOf(b));
+            //打印
+            System.out.println(msg);
+            //发送消息
+            defaultMQProducer.send(message);
+        }
+        //关闭
+        defaultMQProducer.shutdown();
+    }
+}
+```
+
+
+
+
+
+
+
+### 消息消费者
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.MessageSelector;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer4
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:54
+ * Version(版本): 1.0
+ * Description(描述)： 消费者，条件：a>=7 or b<6
+ */
+
+public class FilterConsumer4
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", MessageSelector.bySql("a>=7 or b<6"));
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+
+```
+
+
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.MessageSelector;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer5
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:57
+ * Version(版本): 1.0
+ * Description(描述)： 消费者，条件：a<=6 and b>11
+ */
+
+public class FilterConsumer5
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", MessageSelector.bySql("a<=6 and b>11"));
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.MessageSelector;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_过滤消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): FilterConsumer6
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/7
+ * Time(创建时间)： 14:59
+ * Version(版本): 1.0
+ * Description(描述)： 消费者，条件：a=3 or b=10
+ */
+
+public class FilterConsumer6
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //设置nameserver地址
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //设置消费模式-广播模式
+        defaultMQPushConsumer.setMessageModel(MessageModel.BROADCASTING);
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", MessageSelector.bySql("a=3 or b=10"));
+        //注册监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+
+
+### 启动测试
+
+
+
+如果出现以下异常：
+
+```sh
+Exception in thread "main" org.apache.rocketmq.client.exception.MQClientException: CODE: 1  DESC: The broker does not support consumer to filter message by SQL92
+For more information, please visit the url, http://rocketmq.apache.org/docs/faq/
+	at org.apache.rocketmq.client.impl.MQClientAPIImpl.checkClientInBroker(MQClientAPIImpl.java:2310)
+	at org.apache.rocketmq.client.impl.factory.MQClientInstance.checkClientInBroker(MQClientInstance.java:450)
+	at org.apache.rocketmq.client.impl.consumer.DefaultMQPushConsumerImpl.start(DefaultMQPushConsumerImpl.java:656)
+	at org.apache.rocketmq.client.consumer.DefaultMQPushConsumer.start(DefaultMQPushConsumer.java:707)
+	at mao.consumer.FilterConsumer4.main(FilterConsumer4.java:54)
+```
+
+
+
+
+
+则需要在配置文件中需要添加配置项
+
+```sh
+enablePropertyFilter=true
+```
+
+
+
+
+
+重启服务
+
+
+
+启动消费者4，再启动生产者2
+
+
+
+生产者2打印的信息
+
+```sh
+消息0     属性a：8     属性b：1
+消息1     属性a：3     属性b：5
+消息2     属性a：9     属性b：2
+消息3     属性a：6     属性b：5
+消息4     属性a：8     属性b：1
+消息5     属性a：8     属性b：12
+消息6     属性a：1     属性b：0
+消息7     属性a：7     属性b：14
+消息8     属性a：1     属性b：8
+消息9     属性a：8     属性b：20
+消息10     属性a：1     属性b：10
+消息11     属性a：8     属性b：20
+消息12     属性a：1     属性b：1
+消息13     属性a：3     属性b：12
+消息14     属性a：3     属性b：2
+消息15     属性a：6     属性b：16
+消息16     属性a：3     属性b：3
+消息17     属性a：5     属性b：11
+消息18     属性a：6     属性b：16
+消息19     属性a：3     属性b：11
+消息20     属性a：3     属性b：0
+消息21     属性a：9     属性b：2
+消息22     属性a：0     属性b：15
+消息23     属性a：9     属性b：10
+消息24     属性a：8     属性b：16
+消息25     属性a：7     属性b：13
+消息26     属性a：7     属性b：0
+消息27     属性a：7     属性b：0
+消息28     属性a：8     属性b：20
+消息29     属性a：10     属性b：4
+消息30     属性a：2     属性b：18
+消息31     属性a：6     属性b：1
+消息32     属性a：10     属性b：18
+消息33     属性a：3     属性b：8
+消息34     属性a：9     属性b：20
+消息35     属性a：4     属性b：13
+消息36     属性a：1     属性b：10
+消息37     属性a：1     属性b：0
+消息38     属性a：8     属性b：11
+消息39     属性a：7     属性b：9
+消息40     属性a：1     属性b：19
+消息41     属性a：3     属性b：18
+消息42     属性a：5     属性b：4
+消息43     属性a：7     属性b：19
+消息44     属性a：0     属性b：14
+消息45     属性a：6     属性b：16
+消息46     属性a：5     属性b：4
+消息47     属性a：2     属性b：6
+消息48     属性a：3     属性b：2
+消息49     属性a：3     属性b：4
+消息50     属性a：8     属性b：8
+消息51     属性a：0     属性b：12
+消息52     属性a：8     属性b：20
+消息53     属性a：0     属性b：7
+消息54     属性a：1     属性b：1
+消息55     属性a：1     属性b：0
+消息56     属性a：7     属性b：1
+消息57     属性a：3     属性b：2
+消息58     属性a：5     属性b：11
+消息59     属性a：4     属性b：19
+消息60     属性a：6     属性b：0
+消息61     属性a：9     属性b：18
+消息62     属性a：4     属性b：4
+消息63     属性a：4     属性b：15
+消息64     属性a：5     属性b：19
+消息65     属性a：1     属性b：3
+消息66     属性a：8     属性b：8
+消息67     属性a：7     属性b：1
+消息68     属性a：2     属性b：13
+消息69     属性a：0     属性b：16
+消息70     属性a：1     属性b：15
+消息71     属性a：8     属性b：20
+消息72     属性a：7     属性b：12
+消息73     属性a：7     属性b：7
+消息74     属性a：2     属性b：19
+消息75     属性a：10     属性b：16
+消息76     属性a：8     属性b：3
+消息77     属性a：8     属性b：17
+消息78     属性a：7     属性b：9
+消息79     属性a：1     属性b：9
+消息80     属性a：4     属性b：18
+消息81     属性a：9     属性b：7
+消息82     属性a：7     属性b：1
+消息83     属性a：6     属性b：20
+消息84     属性a：7     属性b：20
+消息85     属性a：3     属性b：3
+消息86     属性a：2     属性b：13
+消息87     属性a：6     属性b：15
+消息88     属性a：3     属性b：18
+消息89     属性a：6     属性b：6
+消息90     属性a：2     属性b：4
+消息91     属性a：1     属性b：17
+消息92     属性a：4     属性b：3
+消息93     属性a：3     属性b：7
+消息94     属性a：4     属性b：16
+消息95     属性a：10     属性b：12
+消息96     属性a：4     属性b：19
+消息97     属性a：2     属性b：19
+消息98     属性a：0     属性b：1
+消息99     属性a：0     属性b：12
+```
+
+
+
+消费者4打印的信息
+
+```sh
+消息0     属性a：8     属性b：1
+消息1     属性a：3     属性b：5
+消息2     属性a：9     属性b：2
+消息3     属性a：6     属性b：5
+消息4     属性a：8     属性b：1
+消息5     属性a：8     属性b：12
+消息6     属性a：1     属性b：0
+消息7     属性a：7     属性b：14
+消息9     属性a：8     属性b：20
+消息11     属性a：8     属性b：20
+消息12     属性a：1     属性b：1
+消息14     属性a：3     属性b：2
+消息16     属性a：3     属性b：3
+消息20     属性a：3     属性b：0
+消息21     属性a：9     属性b：2
+消息23     属性a：9     属性b：10
+消息24     属性a：8     属性b：16
+消息25     属性a：7     属性b：13
+消息26     属性a：7     属性b：0
+消息27     属性a：7     属性b：0
+消息28     属性a：8     属性b：20
+消息29     属性a：10     属性b：4
+消息31     属性a：6     属性b：1
+消息32     属性a：10     属性b：18
+消息34     属性a：9     属性b：20
+消息37     属性a：1     属性b：0
+消息38     属性a：8     属性b：11
+消息39     属性a：7     属性b：9
+消息42     属性a：5     属性b：4
+消息43     属性a：7     属性b：19
+消息46     属性a：5     属性b：4
+消息48     属性a：3     属性b：2
+消息49     属性a：3     属性b：4
+消息50     属性a：8     属性b：8
+消息52     属性a：8     属性b：20
+消息54     属性a：1     属性b：1
+消息55     属性a：1     属性b：0
+消息56     属性a：7     属性b：1
+消息57     属性a：3     属性b：2
+消息60     属性a：6     属性b：0
+消息61     属性a：9     属性b：18
+消息62     属性a：4     属性b：4
+消息65     属性a：1     属性b：3
+消息66     属性a：8     属性b：8
+消息67     属性a：7     属性b：1
+消息71     属性a：8     属性b：20
+消息72     属性a：7     属性b：12
+消息73     属性a：7     属性b：7
+消息75     属性a：10     属性b：16
+消息76     属性a：8     属性b：3
+消息77     属性a：8     属性b：17
+消息78     属性a：7     属性b：9
+消息81     属性a：9     属性b：7
+消息82     属性a：7     属性b：1
+消息84     属性a：7     属性b：20
+消息85     属性a：3     属性b：3
+消息90     属性a：2     属性b：4
+消息92     属性a：4     属性b：3
+消息95     属性a：10     属性b：12
+消息98     属性a：0     属性b：1
+```
+
+
+
+
+
+
+
+关闭消费者4，启动消费者5，再启动生产者2
+
+
+
+生产者2打印的信息
+
+```sh
+消息0     属性a：8     属性b：19
+消息1     属性a：1     属性b：4
+消息2     属性a：2     属性b：17
+消息3     属性a：0     属性b：0
+消息4     属性a：10     属性b：14
+消息5     属性a：4     属性b：18
+消息6     属性a：2     属性b：13
+消息7     属性a：6     属性b：20
+消息8     属性a：4     属性b：7
+消息9     属性a：1     属性b：15
+消息10     属性a：10     属性b：12
+消息11     属性a：3     属性b：7
+消息12     属性a：8     属性b：8
+消息13     属性a：7     属性b：5
+消息14     属性a：0     属性b：15
+消息15     属性a：10     属性b：17
+消息16     属性a：1     属性b：16
+消息17     属性a：2     属性b：14
+消息18     属性a：0     属性b：20
+消息19     属性a：7     属性b：3
+消息20     属性a：0     属性b：1
+消息21     属性a：8     属性b：12
+消息22     属性a：6     属性b：12
+消息23     属性a：2     属性b：17
+消息24     属性a：5     属性b：1
+消息25     属性a：4     属性b：17
+消息26     属性a：3     属性b：9
+消息27     属性a：5     属性b：15
+消息28     属性a：6     属性b：5
+消息29     属性a：9     属性b：14
+消息30     属性a：5     属性b：3
+消息31     属性a：8     属性b：13
+消息32     属性a：6     属性b：7
+消息33     属性a：2     属性b：20
+消息34     属性a：6     属性b：12
+消息35     属性a：8     属性b：17
+消息36     属性a：6     属性b：0
+消息37     属性a：9     属性b：19
+消息38     属性a：7     属性b：5
+消息39     属性a：4     属性b：4
+消息40     属性a：0     属性b：3
+消息41     属性a：1     属性b：3
+消息42     属性a：0     属性b：13
+消息43     属性a：1     属性b：11
+消息44     属性a：8     属性b：3
+消息45     属性a：7     属性b：1
+消息46     属性a：6     属性b：5
+消息47     属性a：3     属性b：2
+消息48     属性a：1     属性b：18
+消息49     属性a：8     属性b：3
+消息50     属性a：8     属性b：14
+消息51     属性a：0     属性b：8
+消息52     属性a：9     属性b：5
+消息53     属性a：1     属性b：10
+消息54     属性a：7     属性b：6
+消息55     属性a：3     属性b：15
+消息56     属性a：8     属性b：10
+消息57     属性a：4     属性b：0
+消息58     属性a：9     属性b：13
+消息59     属性a：7     属性b：8
+消息60     属性a：4     属性b：10
+消息61     属性a：10     属性b：14
+消息62     属性a：6     属性b：13
+消息63     属性a：1     属性b：6
+消息64     属性a：3     属性b：6
+消息65     属性a：10     属性b：4
+消息66     属性a：3     属性b：11
+消息67     属性a：3     属性b：14
+消息68     属性a：5     属性b：19
+消息69     属性a：2     属性b：0
+消息70     属性a：1     属性b：7
+消息71     属性a：10     属性b：19
+消息72     属性a：3     属性b：11
+消息73     属性a：9     属性b：8
+消息74     属性a：3     属性b：11
+消息75     属性a：7     属性b：15
+消息76     属性a：2     属性b：15
+消息77     属性a：7     属性b：18
+消息78     属性a：8     属性b：10
+消息79     属性a：9     属性b：11
+消息80     属性a：10     属性b：17
+消息81     属性a：5     属性b：0
+消息82     属性a：9     属性b：12
+消息83     属性a：2     属性b：5
+消息84     属性a：6     属性b：4
+消息85     属性a：4     属性b：3
+消息86     属性a：0     属性b：13
+消息87     属性a：1     属性b：14
+消息88     属性a：1     属性b：19
+消息89     属性a：0     属性b：11
+消息90     属性a：3     属性b：10
+消息91     属性a：5     属性b：19
+消息92     属性a：9     属性b：5
+消息93     属性a：9     属性b：11
+消息94     属性a：0     属性b：14
+消息95     属性a：6     属性b：8
+消息96     属性a：10     属性b：4
+消息97     属性a：1     属性b：7
+消息98     属性a：10     属性b：19
+消息99     属性a：1     属性b：11
+```
+
+
+
+
+
+消费者5打印的信息
+
+```sh
+消息2     属性a：2     属性b：17
+消息5     属性a：4     属性b：18
+消息6     属性a：2     属性b：13
+消息7     属性a：6     属性b：20
+消息9     属性a：1     属性b：15
+消息14     属性a：0     属性b：15
+消息16     属性a：1     属性b：16
+消息17     属性a：2     属性b：14
+消息18     属性a：0     属性b：20
+消息22     属性a：6     属性b：12
+消息23     属性a：2     属性b：17
+消息25     属性a：4     属性b：17
+消息27     属性a：5     属性b：15
+消息33     属性a：2     属性b：20
+消息34     属性a：6     属性b：12
+消息42     属性a：0     属性b：13
+消息48     属性a：1     属性b：18
+消息55     属性a：3     属性b：15
+消息62     属性a：6     属性b：13
+消息67     属性a：3     属性b：14
+消息68     属性a：5     属性b：19
+消息76     属性a：2     属性b：15
+消息86     属性a：0     属性b：13
+消息87     属性a：1     属性b：14
+消息88     属性a：1     属性b：19
+消息91     属性a：5     属性b：19
+消息94     属性a：0     属性b：14
+```
+
+
+
+
+
+
+
+关闭消费者5，启动消费者6，再启动生产者2
+
+
+
+生产者2打印的信息
+
+```sh
+消息0     属性a：0     属性b：17
+消息1     属性a：2     属性b：13
+消息2     属性a：2     属性b：5
+消息3     属性a：10     属性b：19
+消息4     属性a：6     属性b：11
+消息5     属性a：10     属性b：11
+消息6     属性a：5     属性b：14
+消息7     属性a：2     属性b：15
+消息8     属性a：10     属性b：9
+消息9     属性a：1     属性b：14
+消息10     属性a：10     属性b：12
+消息11     属性a：2     属性b：9
+消息12     属性a：1     属性b：2
+消息13     属性a：7     属性b：6
+消息14     属性a：6     属性b：5
+消息15     属性a：6     属性b：17
+消息16     属性a：6     属性b：9
+消息17     属性a：4     属性b：13
+消息18     属性a：7     属性b：11
+消息19     属性a：10     属性b：18
+消息20     属性a：4     属性b：3
+消息21     属性a：5     属性b：17
+消息22     属性a：10     属性b：2
+消息23     属性a：4     属性b：12
+消息24     属性a：8     属性b：12
+消息25     属性a：0     属性b：18
+消息26     属性a：7     属性b：3
+消息27     属性a：3     属性b：15
+消息28     属性a：10     属性b：19
+消息29     属性a：5     属性b：1
+消息30     属性a：10     属性b：10
+消息31     属性a：9     属性b：2
+消息32     属性a：1     属性b：5
+消息33     属性a：10     属性b：3
+消息34     属性a：6     属性b：5
+消息35     属性a：5     属性b：5
+消息36     属性a：0     属性b：8
+消息37     属性a：2     属性b：4
+消息38     属性a：7     属性b：0
+消息39     属性a：8     属性b：15
+消息40     属性a：1     属性b：5
+消息41     属性a：9     属性b：2
+消息42     属性a：10     属性b：2
+消息43     属性a：7     属性b：14
+消息44     属性a：9     属性b：17
+消息45     属性a：8     属性b：1
+消息46     属性a：4     属性b：13
+消息47     属性a：9     属性b：9
+消息48     属性a：7     属性b：5
+消息49     属性a：7     属性b：3
+消息50     属性a：8     属性b：17
+消息51     属性a：4     属性b：10
+消息52     属性a：1     属性b：5
+消息53     属性a：3     属性b：9
+消息54     属性a：7     属性b：9
+消息55     属性a：7     属性b：12
+消息56     属性a：2     属性b：13
+消息57     属性a：7     属性b：18
+消息58     属性a：10     属性b：3
+消息59     属性a：9     属性b：20
+消息60     属性a：6     属性b：9
+消息61     属性a：3     属性b：20
+消息62     属性a：2     属性b：11
+消息63     属性a：4     属性b：16
+消息64     属性a：3     属性b：4
+消息65     属性a：7     属性b：20
+消息66     属性a：4     属性b：0
+消息67     属性a：1     属性b：10
+消息68     属性a：2     属性b：9
+消息69     属性a：1     属性b：19
+消息70     属性a：3     属性b：10
+消息71     属性a：1     属性b：7
+消息72     属性a：5     属性b：5
+消息73     属性a：9     属性b：10
+消息74     属性a：10     属性b：3
+消息75     属性a：4     属性b：11
+消息76     属性a：1     属性b：1
+消息77     属性a：1     属性b：11
+消息78     属性a：2     属性b：5
+消息79     属性a：1     属性b：3
+消息80     属性a：10     属性b：3
+消息81     属性a：10     属性b：19
+消息82     属性a：3     属性b：17
+消息83     属性a：7     属性b：17
+消息84     属性a：5     属性b：15
+消息85     属性a：2     属性b：1
+消息86     属性a：0     属性b：15
+消息87     属性a：9     属性b：10
+消息88     属性a：9     属性b：0
+消息89     属性a：7     属性b：2
+消息90     属性a：4     属性b：15
+消息91     属性a：5     属性b：17
+消息92     属性a：8     属性b：3
+消息93     属性a：9     属性b：17
+消息94     属性a：7     属性b：2
+消息95     属性a：10     属性b：14
+消息96     属性a：6     属性b：1
+消息97     属性a：9     属性b：6
+消息98     属性a：8     属性b：8
+消息99     属性a：2     属性b：18
+```
+
+
+
+
+
+消费者6打印的信息
+
+```sh
+消息27     属性a：3     属性b：15
+消息30     属性a：10     属性b：10
+消息51     属性a：4     属性b：10
+消息53     属性a：3     属性b：9
+消息61     属性a：3     属性b：20
+消息64     属性a：3     属性b：4
+消息67     属性a：1     属性b：10
+消息70     属性a：3     属性b：10
+消息73     属性a：9     属性b：10
+消息82     属性a：3     属性b：17
+消息87     属性a：9     属性b：10
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 事务消息
