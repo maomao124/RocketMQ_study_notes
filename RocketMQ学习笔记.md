@@ -6508,3 +6508,426 @@ enablePropertyFilter=true
 
 
 ## 事务消息
+
+### 流程分析
+
+![image-20221210154738538](img/RocketMQ学习笔记/image-20221210154738538.png)
+
+
+
+
+
+两个流程：正常事务消息的发送及提交、事务消息的补偿流程。
+
+
+
+#### 事务消息发送及提交
+
+(1) 发送消息（half消息）。
+
+(2) 服务端响应消息写入结果。
+
+(3) 根据发送结果执行本地事务（如果写入失败，此时half消息对业务不可见，本地逻辑不执行）。
+
+(4) 根据本地事务状态执行Commit或者Rollback（Commit操作生成消息索引，消息对消费者可见）
+
+
+
+
+
+#### 事务补偿
+
+(1) 对没有Commit/Rollback的事务消息（pending状态的消息），从服务端发起一次“回查”
+
+(2) Producer收到回查消息，检查回查消息对应的本地事务的状态
+
+(3) 根据本地事务状态，重新Commit或者Rollback
+
+其中，补偿阶段用于解决消息Commit或者Rollback发生超时或者失败的情况。
+
+
+
+
+
+#### 事务消息状态
+
+事务消息共有三种状态，提交状态、回滚状态、中间状态：
+
+* TransactionStatus.CommitTransaction: 提交事务，它允许消费者消费此消息。
+* TransactionStatus.RollbackTransaction: 回滚事务，它代表该消息将被删除，不允许被消费。
+* TransactionStatus.Unknown: 中间状态，它代表需要检查消息队列来确定状态。
+
+
+
+
+
+
+
+
+
+### 发送事务消息
+
+#### 创建事务性生产者
+
+使用 `TransactionMQProducer`类创建生产者，并指定唯一的 `ProducerGroup`，就可以设置自定义线程池来处理这些检查请求。执行本地事务后、需要根据执行结果对消息队列进行回复
+
+
+
+```java
+package mao.producer;
+
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.TransactionListener;
+import org.apache.rocketmq.client.producer.TransactionMQProducer;
+import org.apache.rocketmq.client.producer.TransactionSendResult;
+import org.apache.rocketmq.common.message.Message;
+
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Project name(项目名称)：RocketMQ_事务消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): TransactionalProducer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/10
+ * Time(创建时间)： 15:53
+ * Version(版本): 1.0
+ * Description(描述)： 生产者-事务消息
+ */
+
+public class TransactionalProducer
+{
+    /**
+     * 标签
+     */
+    private static final String[] tags = new String[]{"TagA", "TagB", "TagC"};
+
+    public static void main(String[] args) throws MQClientException, InterruptedException
+    {
+        //生产者
+        TransactionMQProducer transactionMQProducer = new TransactionMQProducer("mao_group");
+        //事务监听器
+        TransactionListener transactionListener = new TransactionListenerImpl();
+        //设置nameserver地址
+        transactionMQProducer.setNamesrvAddr("127.0.0.1:9876");
+        //设置监听器
+        transactionMQProducer.setTransactionListener(transactionListener);
+        //启动生产者
+        transactionMQProducer.start();
+        //发送30条消息
+        for (int i = 0; i < 30; i++)
+        {
+            try
+            {
+                //标签
+                String tag = tags[i % (tags.length)];
+                //消息体
+                String body = "标签：" + tag + "   消息：" + i;
+                //消息对象
+                Message message = new Message("test_topic", tag, body.getBytes(StandardCharsets.UTF_8));
+                //发送事务消息
+                TransactionSendResult transactionSendResult = transactionMQProducer.sendMessageInTransaction(message, null);
+                Thread.sleep(500);
+                //打印
+                System.out.println(body);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
+
+
+
+
+#### 实现事务的监听接口
+
+```java
+package mao.producer;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.LocalTransactionState;
+import org.apache.rocketmq.client.producer.TransactionListener;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageExt;
+
+/**
+ * Project name(项目名称)：RocketMQ_事务消息的发送与接收
+ * Package(包名): mao.producer
+ * Class(类名): TransactionListenerImpl
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/10
+ * Time(创建时间)： 16:01
+ * Version(版本): 1.0
+ * Description(描述)： 事务监听器实现
+ */
+
+public class TransactionListenerImpl implements TransactionListener
+{
+    /**
+     * 执行本地事务
+     *
+     * @param msg 消息
+     * @param arg 参数
+     * @return {@link LocalTransactionState}
+     */
+    @Override
+    public LocalTransactionState executeLocalTransaction(Message msg, Object arg)
+    {
+        System.out.println("执行本地事务");
+        if (StringUtils.equals("TagA", msg.getTags()))
+        {
+            //如果是标签a的消息，直接提交
+            return LocalTransactionState.COMMIT_MESSAGE;
+        }
+        else if (StringUtils.equals("TagB", msg.getTags()))
+        {
+            //如果是标签B的消息，回滚
+            return LocalTransactionState.ROLLBACK_MESSAGE;
+        }
+        else
+        {
+            //否则，不知道，中间状态
+            return LocalTransactionState.UNKNOW;
+        }
+
+    }
+
+    /**
+     * 检查本地事务
+     *
+     * @param msg 消息
+     * @return {@link LocalTransactionState}
+     */
+    @Override
+    public LocalTransactionState checkLocalTransaction(MessageExt msg)
+    {
+        System.out.println("MQ检查消息Tag【" + msg.getTags() + "】的本地事务执行结果");
+        return LocalTransactionState.COMMIT_MESSAGE;
+    }
+}
+```
+
+
+
+
+
+
+
+### 接收事务消息
+
+```java
+package mao.consumer;
+
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：RocketMQ_事务消息的发送与接收
+ * Package(包名): mao.consumer
+ * Class(类名): Consumer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/10
+ * Time(创建时间)： 16:11
+ * Version(版本): 1.0
+ * Description(描述)： 消息消费者
+ */
+
+public class Consumer
+{
+    public static void main(String[] args) throws MQClientException
+    {
+        //消费者
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer("mao_group");
+        //nameserver
+        defaultMQPushConsumer.setNamesrvAddr("127.0.0.1:9876");
+        //订阅
+        defaultMQPushConsumer.subscribe("test_topic", "*");
+        //监听器
+        defaultMQPushConsumer.registerMessageListener(new MessageListenerConcurrently()
+        {
+            @Override
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list, ConsumeConcurrentlyContext consumeConcurrentlyContext)
+            {
+                for (MessageExt messageExt : list)
+                {
+                    System.out.println(new String(messageExt.getBody(), StandardCharsets.UTF_8));
+                }
+                //返回成功
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            }
+        });
+        //启动
+        defaultMQPushConsumer.start();
+    }
+}
+```
+
+
+
+
+
+
+
+### 启动测试
+
+先启动消费者，再启动生产者
+
+等待一段时间
+
+
+
+生产者打印的信息
+
+```sh
+执行本地事务
+标签：TagA   消息：0
+执行本地事务
+标签：TagB   消息：1
+执行本地事务
+标签：TagC   消息：2
+执行本地事务
+标签：TagA   消息：3
+执行本地事务
+标签：TagB   消息：4
+执行本地事务
+标签：TagC   消息：5
+执行本地事务
+标签：TagA   消息：6
+执行本地事务
+标签：TagB   消息：7
+执行本地事务
+标签：TagC   消息：8
+执行本地事务
+标签：TagA   消息：9
+执行本地事务
+标签：TagB   消息：10
+执行本地事务
+标签：TagC   消息：11
+执行本地事务
+标签：TagA   消息：12
+执行本地事务
+标签：TagB   消息：13
+执行本地事务
+标签：TagC   消息：14
+执行本地事务
+标签：TagA   消息：15
+执行本地事务
+标签：TagB   消息：16
+执行本地事务
+标签：TagC   消息：17
+执行本地事务
+标签：TagA   消息：18
+执行本地事务
+标签：TagB   消息：19
+执行本地事务
+标签：TagC   消息：20
+执行本地事务
+标签：TagA   消息：21
+执行本地事务
+标签：TagB   消息：22
+执行本地事务
+标签：TagC   消息：23
+执行本地事务
+标签：TagA   消息：24
+执行本地事务
+标签：TagB   消息：25
+执行本地事务
+标签：TagC   消息：26
+执行本地事务
+标签：TagA   消息：27
+执行本地事务
+标签：TagB   消息：28
+执行本地事务
+标签：TagC   消息：29
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+MQ检查消息Tag【TagC】的本地事务执行结果
+```
+
+
+
+
+
+
+
+消费者打印的信息
+
+```sh
+标签：TagA   消息：0
+标签：TagA   消息：3
+标签：TagA   消息：6
+标签：TagA   消息：9
+标签：TagA   消息：12
+标签：TagA   消息：15
+标签：TagA   消息：18
+标签：TagA   消息：21
+标签：TagA   消息：24
+标签：TagA   消息：27
+标签：TagC   消息：11
+标签：TagC   消息：8
+标签：TagC   消息：5
+标签：TagC   消息：2
+标签：TagC   消息：14
+标签：TagC   消息：23
+标签：TagC   消息：17
+标签：TagC   消息：29
+标签：TagC   消息：20
+标签：TagC   消息：26
+```
+
+
+
+
+
+
+
+
+
+
+
+### 使用限制
+
+1. 事务消息不支持延时消息和批量消息。
+2. 为了避免单个消息被检查太多次而导致半队列消息累积，我们默认将单个消息的检查次数限制为 15 次，但是用户可以通过 Broker 配置文件的 `transactionCheckMax`参数来修改此限制。如果已经检查某条消息超过 N 次的话（ N = `transactionCheckMax` ） 则 Broker 将丢弃此消息，并在默认情况下同时打印错误日志。用户可以通过重写 `AbstractTransactionCheckListener` 类来修改这个行为。
+3. 事务消息将在 Broker 配置文件中的参数 transactionMsgTimeout 这样的特定时间长度之后被检查。当发送事务消息时，用户还可以通过设置用户属性 CHECK_IMMUNITY_TIME_IN_SECONDS 来改变这个限制，该参数优先于 `transactionMsgTimeout` 参数。
+4. 事务性消息可能不止一次被检查或消费。
+5. 提交给用户的目标主题消息可能会失败，目前这依日志的记录而定。它的高可用性通过 RocketMQ 本身的高可用性机制来保证，如果希望确保事务消息不丢失、并且事务完整性得到保证，建议使用同步的双重写入机制。
+6. 事务消息的生产者 ID 不能与其他类型消息的生产者 ID 共享。与其他类型的消息不同，事务消息允许反向查询、MQ服务器能通过它们的生产者 ID 查询到消费者。
+
+
+
+
+
+
+
+
+
+
+
