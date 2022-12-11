@@ -7570,10 +7570,98 @@ public class RocketController
         log.info("开始发送消息");
         Message message = new Message();
         message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
-        rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        log.info("发送结果：" + sendResult);
         return data;
     }
 }
+```
+
+
+
+```sh
+2022-12-11 19:11:50.283  INFO 7936 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:50.372  INFO 7936 --- [nio-8080-exec-1] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E22400000, offsetMsgId=AC17A00100002A9F0000000009A7BD8F, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61959]
+2022-12-11 19:11:52.012  INFO 7936 --- [nio-8080-exec-2] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:52.042  INFO 7936 --- [nio-8080-exec-2] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E28CD0003, offsetMsgId=AC17A00100002A9F0000000009A7C099, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61960]
+2022-12-11 19:11:52.519  INFO 7936 --- [nio-8080-exec-3] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:52.525  INFO 7936 --- [nio-8080-exec-3] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E2AC70006, offsetMsgId=AC17A00100002A9F0000000009A7C3A3, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61961]
+2022-12-11 19:11:58.421  INFO 7936 --- [nio-8080-exec-4] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:58.453  INFO 7936 --- [nio-8080-exec-4] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E41D50009, offsetMsgId=AC17A00100002A9F0000000009A7C6AC, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61962]
+2022-12-11 19:11:58.879  INFO 7936 --- [nio-8080-exec-5] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:58.904  INFO 7936 --- [nio-8080-exec-5] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E439F000C, offsetMsgId=AC17A00100002A9F0000000009A7C9B6, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61963]
+2022-12-11 19:11:59.205  INFO 7936 --- [nio-8080-exec-6] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:59.215  INFO 7936 --- [nio-8080-exec-6] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E44E5000F, offsetMsgId=AC17A00100002A9F0000000009A7CCC0, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61964]
+2022-12-11 19:11:59.493  INFO 7936 --- [nio-8080-exec-7] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:59.511  INFO 7936 --- [nio-8080-exec-7] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E46060012, offsetMsgId=AC17A00100002A9F0000000009A7CFCA, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61965]
+2022-12-11 19:11:59.765  INFO 7936 --- [nio-8080-exec-8] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:59.783  INFO 7936 --- [nio-8080-exec-8] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E47150015, offsetMsgId=AC17A00100002A9F0000000009A7D2D4, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61966]
+2022-12-11 19:11:59.983  INFO 7936 --- [nio-8080-exec-9] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:11:59.991  INFO 7936 --- [nio-8080-exec-9] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E47F00018, offsetMsgId=AC17A00100002A9F0000000009A7D5DE, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61967]
+2022-12-11 19:12:04.639  INFO 7936 --- [io-8080-exec-10] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:04.669  INFO 7936 --- [io-8080-exec-10] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5A20001B, offsetMsgId=AC17A00100002A9F0000000009A7D8E7, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61968]
+2022-12-11 19:12:04.965  INFO 7936 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:04.974  INFO 7936 --- [nio-8080-exec-1] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5B65001E, offsetMsgId=AC17A00100002A9F0000000009A7DBF1, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61969]
+2022-12-11 19:12:05.222  INFO 7936 --- [nio-8080-exec-2] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:05.245  INFO 7936 --- [nio-8080-exec-2] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5C670021, offsetMsgId=AC17A00100002A9F0000000009A7DEFA, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61970]
+2022-12-11 19:12:05.454  INFO 7936 --- [nio-8080-exec-3] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:05.466  INFO 7936 --- [nio-8080-exec-3] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5D4F0024, offsetMsgId=AC17A00100002A9F0000000009A7E204, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61971]
+2022-12-11 19:12:05.699  INFO 7936 --- [nio-8080-exec-4] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:05.707  INFO 7936 --- [nio-8080-exec-4] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5E440027, offsetMsgId=AC17A00100002A9F0000000009A7E50E, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61972]
+2022-12-11 19:12:05.875  INFO 7936 --- [nio-8080-exec-5] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:12:05.882  INFO 7936 --- [nio-8080-exec-5] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000011F0066D3C617379E5EF3002A, offsetMsgId=AC17A00100002A9F0000000009A7E817, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=1], queueOffset=61973]
+```
+
+
+
+
+
+将hashkey更改成2
+
+```java
+SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "2");
+```
+
+
+
+```sh
+2022-12-11 19:13:39.399  INFO 23852 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:13:39.482  INFO 23852 --- [nio-8080-exec-1] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C617379FCC770000, offsetMsgId=AC17A00100002A9F0000000009A7EB20, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61872]
+2022-12-11 19:13:39.888  INFO 23852 --- [nio-8080-exec-2] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:13:39.914  INFO 23852 --- [nio-8080-exec-2] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C617379FCE300003, offsetMsgId=AC17A00100002A9F0000000009A7EE2A, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61873]
+2022-12-11 19:13:40.186  INFO 23852 --- [nio-8080-exec-3] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:13:40.200  INFO 23852 --- [nio-8080-exec-3] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C617379FCF5B0006, offsetMsgId=AC17A00100002A9F0000000009A7F134, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61874]
+2022-12-11 19:14:18.792  INFO 23852 --- [nio-8080-exec-4] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:14:18.819  INFO 23852 --- [nio-8080-exec-4] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C61737A066290009, offsetMsgId=AC17A00100002A9F0000000009A7F43E, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61875]
+2022-12-11 19:14:18.979  INFO 23852 --- [nio-8080-exec-5] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:14:18.989  INFO 23852 --- [nio-8080-exec-5] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C61737A066E3000C, offsetMsgId=AC17A00100002A9F0000000009A7F748, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61876]
+2022-12-11 19:14:19.116  INFO 23852 --- [nio-8080-exec-6] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:14:19.123  INFO 23852 --- [nio-8080-exec-6] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015D2C66D3C61737A0676C000F, offsetMsgId=AC17A00100002A9F0000000009A7FA52, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=2], queueOffset=61877]
+```
+
+
+
+
+
+将hashkey更改成7
+
+```sh
+SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "7");
+```
+
+
+
+```sh
+2022-12-11 19:15:05.288  INFO 24388 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:15:05.416  INFO 24388 --- [nio-8080-exec-1] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015F4466D3C61737A11BFA0000, offsetMsgId=AC17A00100002A9F0000000009A7FD5B, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=3], queueOffset=62182]
+2022-12-11 19:15:06.419  INFO 24388 --- [nio-8080-exec-2] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:15:06.495  INFO 24388 --- [nio-8080-exec-2] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015F4466D3C61737A120330003, offsetMsgId=AC17A00100002A9F0000000009A80065, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=3], queueOffset=62183]
+2022-12-11 19:15:06.580  INFO 24388 --- [nio-8080-exec-3] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:15:06.587  INFO 24388 --- [nio-8080-exec-3] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015F4466D3C61737A120D40006, offsetMsgId=AC17A00100002A9F0000000009A8036F, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=3], queueOffset=62184]
+2022-12-11 19:15:06.718  INFO 24388 --- [nio-8080-exec-4] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:15:06.729  INFO 24388 --- [nio-8080-exec-4] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015F4466D3C61737A1215F0009, offsetMsgId=AC17A00100002A9F0000000009A80678, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=3], queueOffset=62185]
+2022-12-11 19:15:06.866  INFO 24388 --- [nio-8080-exec-5] m.r.controller.RocketController          : 开始发送消息
+2022-12-11 19:15:06.877  INFO 24388 --- [nio-8080-exec-5] m.r.controller.RocketController          : 发送结果：SendResult [sendStatus=SEND_OK, msgId=7F0000015F4466D3C61737A121F2000C, offsetMsgId=AC17A00100002A9F0000000009A80982, messageQueue=MessageQueue [topic=test_topic, brokerName=broker-a, queueId=3], queueOffset=62186]
 ```
 
 
@@ -7584,5 +7672,222 @@ public class RocketController
 
 
 
+
+
+
+
+
+
 ## 发送异步消息
+
+**API**
+
+```java
+//发送普通异步消息-Object
+asyncSend(String destination, Object payload, SendCallback sendCallback);
+
+//发送普通异步消息-Message
+asyncSend(String destination, Message<?> message, SendCallback sendCallback);
+
+//发送普通异步消息-Object，并设置发送超时时间
+asyncSend(String destination, Object payload, SendCallback sendCallback, long timeout);
+
+//发送普通异步消息-Message，并设置发送超时时间
+asyncSend(String destination, Message<?> message, SendCallback sendCallback, long timeout);
+
+//发送普通异步延迟消息，并设置超时
+asyncSend(String destination, Message<?> message, SendCallback sendCallback, long timeout,int delayLevel);
+```
+
+
+
+
+
+
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+    /**
+     * 发送批量消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save3/{data}")
+    public SendResult save3(@PathVariable String data)
+    {
+        log.info("开始发送批量消息");
+        List<Message> messageList = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++)
+        {
+            Message message = new Message();
+            message.setBody(("批量消息:" + data + " -" + i).getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        return rocketMQTemplate.syncSend("test_topic", messageList);
+    }
+
+
+    /**
+     * 发送带tag的消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save4/{data}")
+    public String save4(@PathVariable String data)
+    {
+        log.info("开始发送带tag的消息");
+        //发送带tag的消息，直接在topic后面加上":tag"
+        rocketMQTemplate.convertAndSend("test_topic:tag1", data);
+        return data;
+    }
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save5/{data}")
+    public String save5(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        log.info("发送结果：" + sendResult);
+        return data;
+    }
+
+    /**
+     * 发送异步消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save6/{data}")
+    public String save6(@PathVariable String data)
+    {
+        log.info("开始发送异步消息");
+        rocketMQTemplate.asyncSend("test_group", data, new SendCallback()
+        {
+            @Override
+            public void onSuccess(SendResult sendResult)
+            {
+                log.info("异步消息发送成功：" + sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable)
+            {
+                log.error("异步消息发送失败：" + throwable);
+            }
+        });
+        return data;
+    }
+}
+```
+
+
+
+
+
+```sh
+2022-12-11 19:09:27.245  INFO 24200 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送异步消息
+2022-12-11 19:09:27.296  INFO 24200 --- [ublicExecutor_1] m.r.controller.RocketController          : 异步消息发送成功：SendResult [sendStatus=SEND_OK, msgId=7F0000015E8866D3C617379BF35E0000, offsetMsgId=AC17A00100002A9F0000000009A7B3FB, messageQueue=MessageQueue [topic=test_group, brokerName=broker-a, queueId=2], queueOffset=25]
+2022-12-11 19:09:53.704  INFO 24200 --- [nio-8080-exec-2] m.r.controller.RocketController          : 开始发送异步消息
+2022-12-11 19:09:53.752  INFO 24200 --- [ublicExecutor_2] m.r.controller.RocketController          : 异步消息发送成功：SendResult [sendStatus=SEND_OK, msgId=7F0000015E8866D3C617379C5AA90003, offsetMsgId=AC17A00100002A9F0000000009A7B660, messageQueue=MessageQueue [topic=test_group, brokerName=broker-a, queueId=1], queueOffset=25]
+2022-12-11 19:09:54.330  INFO 24200 --- [nio-8080-exec-3] m.r.controller.RocketController          : 开始发送异步消息
+2022-12-11 19:09:54.420  INFO 24200 --- [ublicExecutor_3] m.r.controller.RocketController          : 异步消息发送成功：SendResult [sendStatus=SEND_OK, msgId=7F0000015E8866D3C617379C5D1A0006, offsetMsgId=AC17A00100002A9F0000000009A7B8C5, messageQueue=MessageQueue [topic=test_group, brokerName=broker-a, queueId=2], queueOffset=26]
+2022-12-11 19:09:54.834  INFO 24200 --- [nio-8080-exec-5] m.r.controller.RocketController          : 开始发送异步消息
+2022-12-11 19:09:54.862  INFO 24200 --- [ublicExecutor_4] m.r.controller.RocketController          : 异步消息发送成功：SendResult [sendStatus=SEND_OK, msgId=7F0000015E8866D3C617379C5F130009, offsetMsgId=AC17A00100002A9F0000000009A7BB2A, messageQueue=MessageQueue [topic=test_group, brokerName=broker-a, queueId=3], queueOffset=25]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 发送单向消息
 
