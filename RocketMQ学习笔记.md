@@ -7891,3 +7891,322 @@ public class RocketController
 
 ## 发送单向消息
 
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+    /**
+     * 发送批量消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save3/{data}")
+    public SendResult save3(@PathVariable String data)
+    {
+        log.info("开始发送批量消息");
+        List<Message> messageList = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++)
+        {
+            Message message = new Message();
+            message.setBody(("批量消息:" + data + " -" + i).getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        return rocketMQTemplate.syncSend("test_topic", messageList);
+    }
+
+
+    /**
+     * 发送带tag的消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save4/{data}")
+    public String save4(@PathVariable String data)
+    {
+        log.info("开始发送带tag的消息");
+        //发送带tag的消息，直接在topic后面加上":tag"
+        rocketMQTemplate.convertAndSend("test_topic:tag1", data);
+        return data;
+    }
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save5/{data}")
+    public String save5(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        SendResult sendResult = rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        log.info("发送结果：" + sendResult);
+        return data;
+    }
+
+    /**
+     * 发送异步消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save6/{data}")
+    public String save6(@PathVariable String data)
+    {
+        log.info("开始发送异步消息");
+        rocketMQTemplate.asyncSend("test_group", data, new SendCallback()
+        {
+            @Override
+            public void onSuccess(SendResult sendResult)
+            {
+                log.info("异步消息发送成功：" + sendResult);
+            }
+
+            @Override
+            public void onException(Throwable throwable)
+            {
+                log.error("异步消息发送失败：" + throwable);
+            }
+        });
+        return data;
+    }
+
+
+    /**
+     * 发送单向消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save7/{data}")
+    public String save7(@PathVariable String data)
+    {
+        log.info("开始发送单向消息");
+        rocketMQTemplate.sendOneWay("test_topic", data);
+        return data;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+## 消息消费
+
+一个消费者只能绑定一个队列，一个队列可以绑定多个消费者
+
+
+
+@RocketMQMessageListener注解参数说明：
+
+- consumerGroup：消费者订阅组，它是必需的，并且必须是唯一的
+- topic：主题名字，生产发送的主题名
+- consumeMode：消费模式，可选择并发或有序接收消息；默认CONCURRENTLY同时接收异步传递的消息
+- messageModel：消息模式，默认CLUSTERING集群消费；如果希望所有订阅者都接收消息，可以设置广播BROADCASTING
+- consumeThreadMax：消费者最大线程数，默认64
+- consumeTimeout：消息阻塞最长时间，默认15分钟
+- nameServer：服务器地址，默认读取配置文件地址，可以单独为消费者设置指定位置
+- selectorExpression：消费指定的Tag标签的业务消息
+
+
+
+
+
+
+
+
+
+```java
+package mao.rocketmq_spring_boot.consumer;
+
+
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.consumer
+ * Class(类名): RocketCustomer
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 19:25
+ * Version(版本): 1.0
+ * Description(描述)： 消费者
+ */
+
+@Component
+@RocketMQMessageListener(consumerGroup = "mao_group", topic = "test_topic")
+public class RocketCustomer implements RocketMQListener<Object>
+{
+
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketCustomer.class);
+
+    @Override
+    public void onMessage(Object o)
+    {
+        //直接调用toString方法打印
+        log.info("消费者监听到一条消息：" + o.toString());
+    }
+}
+```
+
+
+
+
+
+```sh
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_7] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息75     属性a：7     属性b：15
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_17] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息83     属性a：2     属性b：5
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_15] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_6] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息95     属性a：6     属性b：8
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_18] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息0     属性a：0     属性b：17
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_8] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息12     属性a：1     属性b：2
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_16] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息8     属性a：10     属性b：9
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_2] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息16     属性a：6     属性b：9
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_18] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_17] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_15] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_4] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息20     属性a：4     属性b：3
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_5] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息24     属性a：8     属性b：12
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_16] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_1] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息32     属性a：1     属性b：5
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_3] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息44     属性a：9     属性b：17
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_10] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息64     属性a：3     属性b：4
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_16] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_9] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息76     属性a：1     属性b：1
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_11] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息80     属性a：10     属性b：3
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_12] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息84     属性a：5     属性b：15
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_20] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息97     属性a：9     属性b：6
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_19] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息88     属性a：9     属性b：0
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_14] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ad_mao_group_13] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_16] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_10] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_11] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.189  INFO 4456 --- [ead_mao_group_7] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_6] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_8] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_2] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_15] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_17] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_6] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_18] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_4] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ead_mao_group_6] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：消息96     属性a：6     属性b：1
+2022-12-11 19:29:57.191  INFO 4456 --- [ad_mao_group_15] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ad_mao_group_18] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：2
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_5] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_1] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ead_mao_group_4] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_20] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.190  INFO 4456 --- [ead_mao_group_3] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：2
+2022-12-11 19:29:57.190  INFO 4456 --- [ad_mao_group_12] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjI=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ead_mao_group_4] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ad_mao_group_20] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：{"topic":null,"flag":0,"properties":null,"body":"5ZCM5q2l5raI5oGvOjk=","transactionId":null,"keys":null,"tags":null,"delayTimeLevel":0,"waitStoreMsgOK":true,"buyerId":null}
+2022-12-11 19:29:57.191  INFO 4456 --- [ead_mao_group_3] m.r.consumer.RocketCustomer              : 消费者监听到一条消息：9
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 高级功能
+
