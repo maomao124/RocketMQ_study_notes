@@ -6931,3 +6931,658 @@ MQ检查消息Tag【TagC】的本地事务执行结果
 
 
 
+
+
+
+
+
+
+
+
+
+
+# 整合spring boot
+
+## 依赖
+
+```xml
+        <!--RocketMQ spring boot 依赖-->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+```
+
+
+
+
+
+
+
+## Yml文件配置
+
+```yaml
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    # 生产者分组
+    group: mao_group
+    # 发送消息超时时间，单位：毫秒。默认为 3000
+    send-message-timeout: 3000
+    # 消息压缩阀值，当消息体的大小超过该阀值后，进行消息压缩。默认为 4 * 1024B
+    compress-message-body-threshold: 4096
+    # 消息体的最大允许大小。。默认为 4 * 1024 * 1024B
+    max-message-size: 4194304
+    # 同步发送消息时，失败重试次数。默认为 2 次。
+    retry-times-when-send-failed: 2
+    # 异步发送消息时，失败重试次数。默认为 2 次。
+    retry-times-when-send-async-failed: 2
+    # 发送消息给 Broker 时，如果发送失败，是否重试另外一台 Broker 。默认为 false
+    retry-next-server: false
+    # Access Key ，可阅读 https://github.com/apache/rocketmq/blob/master/docs/cn/acl/user_guide.md 文档
+    access-key:
+    # Secret Key
+    secret-key:
+    # 是否开启消息轨迹功能。默认为 true 开启。可阅读 https://github.com/apache/rocketmq/blob/master/docs/cn/msg_trace/user_guide.md 文档
+    enable-msg-trace: true
+    # 自定义消息轨迹的 Topic 。默认为 RMQ_SYS_TRACE_TOPIC
+    customized-trace-topic: RMQ_SYS_TRACE_TOPIC
+  #consumer:
+    # 配置某个消费分组，是否监听指定 Topic 。结构为 Map<消费者分组, <Topic, Boolean>> 。默认情况下，不配置表示监听。
+    #listeners:
+      #erbadagang-consumer-group:
+        # 关闭 test-consumer-group 对 topic1 的监听消费
+        #topic1: false
+```
+
+
+
+
+
+
+
+## 消息发送
+
+
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+}
+```
+
+
+
+```sh
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.1)
+
+2022-12-11 18:40:56.106  INFO 13960 --- [           main] m.r.RocketMqSpringBootApplication        : Starting RocketMqSpringBootApplication using Java 16.0.2 on mao with PID 13960 (H:\程序\大四上期\rocketMQ_spring_boot\target\classes started by mao in H:\程序\大四上期\rocketMQ_spring_boot)
+2022-12-11 18:40:56.109  INFO 13960 --- [           main] m.r.RocketMqSpringBootApplication        : No active profile set, falling back to 1 default profile: "default"
+2022-12-11 18:40:56.870  INFO 13960 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2022-12-11 18:40:56.878  INFO 13960 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2022-12-11 18:40:56.878  INFO 13960 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.64]
+2022-12-11 18:40:56.989  INFO 13960 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2022-12-11 18:40:56.989  INFO 13960 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 841 ms
+2022-12-11 18:40:57.477  INFO 13960 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2022-12-11 18:40:57.489  INFO 13960 --- [           main] m.r.RocketMqSpringBootApplication        : Started RocketMqSpringBootApplication in 1.696 seconds (JVM running for 2.326)
+2022-12-11 18:41:01.210  INFO 13960 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2022-12-11 18:41:01.210  INFO 13960 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2022-12-11 18:41:01.211  INFO 13960 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2022-12-11 18:41:01.232  INFO 13960 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送消息
+
+```
+
+
+
+![image-20221211184129099](img/RocketMQ学习笔记/image-20221211184129099.png)
+
+
+
+
+
+
+
+
+
+## 发送同步消息
+
+
+
+**API**
+
+```java
+//发送普通同步消息-Object
+syncSend(String destination, Object payload);
+
+//发送普通同步消息-Message
+syncSend(String destination, Message<?> message);
+
+//发送批量普通同步消息
+syncSend(String destination, Collection<T> messages);
+
+//发送普通同步消息-Object，并设置发送超时时间
+syncSend(String destination, Object payload, long timeout);
+
+//发送普通同步消息-Message，并设置发送超时时间
+syncSend(String destination, Message<?> message, long timeout);
+
+//发送批量普通同步消息，并设置发送超时时间
+syncSend(String destination, Collection<T> messages, long timeout);
+
+//发送普通同步延迟消息，并设置超时
+syncSend(String destination, Message<?> message, long timeout, int delayLevel);
+```
+
+
+
+
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+}
+```
+
+
+
+
+
+```sh
+2022-12-11 18:47:31.019  INFO 18040 --- [nio-8080-exec-1] m.r.controller.RocketController          : 开始发送同步消息
+```
+
+```json
+{"sendStatus":"SEND_OK","msgId":"7F000001467866D3C6173787DDFC0000","messageQueue":{"topic":"test_topic","brokerName":"broker-a","queueId":1},"queueOffset":61957,"transactionId":null,"offsetMsgId":"AC17A00100002A9F0000000009A79F24","regionId":"DefaultRegion","traceOn":true}
+```
+
+```json
+{"sendStatus":"SEND_OK","msgId":"7F000001467866D3C617378862F40003","messageQueue":{"topic":"test_topic","brokerName":"broker-a","queueId":2},"queueOffset":61869,"transactionId":null,"offsetMsgId":"AC17A00100002A9F0000000009A7A22E","regionId":"DefaultRegion","traceOn":true}
+```
+
+
+
+
+
+
+
+
+
+## 发送批量消息
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+    /**
+     * 发送批量消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save3/{data}")
+    public SendResult save3(@PathVariable String data)
+    {
+        log.info("开始发送批量消息");
+        List<Message> messageList = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++)
+        {
+            Message message = new Message();
+            message.setBody(("同步消息:" + data + " -" + i).getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        return rocketMQTemplate.syncSend("test_topic", messageList);
+    }
+
+}
+```
+
+
+
+
+
+
+
+## 发送带tag的消息
+
+
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+    /**
+     * 发送批量消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save3/{data}")
+    public SendResult save3(@PathVariable String data)
+    {
+        log.info("开始发送批量消息");
+        List<Message> messageList = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++)
+        {
+            Message message = new Message();
+            message.setBody(("批量消息:" + data + " -" + i).getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        return rocketMQTemplate.syncSend("test_topic", messageList);
+    }
+
+
+    /**
+     * 发送带tag的消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save4/{data}")
+    public String save4(@PathVariable String data)
+    {
+        log.info("开始发送带tag的消息");
+        //发送带tag的消息，直接在topic后面加上":tag"
+        rocketMQTemplate.convertAndSend("test_topic:tag1", data);
+        return data;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+## 发送同步消息，并指定队列
+
+
+
+```java
+package mao.rocketmq_spring_boot.controller;
+
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Project name(项目名称)：rocketMQ_spring_boot
+ * Package(包名): mao.rocketmq_spring_boot.controller
+ * Class(类名): RocketController
+ * Author(作者）: mao
+ * Author QQ：1296193245
+ * GitHub：https://github.com/maomao124/
+ * Date(创建日期)： 2022/12/11
+ * Time(创建时间)： 18:29
+ * Version(版本): 1.0
+ * Description(描述)： 无
+ */
+
+@RestController
+public class RocketController
+{
+    /**
+     * 日志
+     */
+    private static final Logger log = LoggerFactory.getLogger(RocketController.class);
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save/{data}")
+    public String save(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        rocketMQTemplate.convertAndSend("test_topic", data);
+        return data;
+    }
+
+    /**
+     * 发送同步消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save2/{data}")
+    public SendResult save2(@PathVariable String data)
+    {
+        log.info("开始发送同步消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        return rocketMQTemplate.syncSend("test_topic", message);
+    }
+
+    /**
+     * 发送批量消息
+     *
+     * @param data 数据
+     * @return {@link SendResult}
+     */
+    @GetMapping("/save3/{data}")
+    public SendResult save3(@PathVariable String data)
+    {
+        log.info("开始发送批量消息");
+        List<Message> messageList = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++)
+        {
+            Message message = new Message();
+            message.setBody(("批量消息:" + data + " -" + i).getBytes(StandardCharsets.UTF_8));
+            messageList.add(message);
+        }
+        return rocketMQTemplate.syncSend("test_topic", messageList);
+    }
+
+
+    /**
+     * 发送带tag的消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save4/{data}")
+    public String save4(@PathVariable String data)
+    {
+        log.info("开始发送带tag的消息");
+        //发送带tag的消息，直接在topic后面加上":tag"
+        rocketMQTemplate.convertAndSend("test_topic:tag1", data);
+        return data;
+    }
+
+    /**
+     * 发送消息
+     *
+     * @param data 数据
+     * @return {@link String}
+     */
+    @GetMapping("/save5/{data}")
+    public String save5(@PathVariable String data)
+    {
+        log.info("开始发送消息");
+        Message message = new Message();
+        message.setBody(("同步消息:" + data).getBytes(StandardCharsets.UTF_8));
+        rocketMQTemplate.syncSendOrderly("test_topic", message, "1");
+        return data;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+## 发送异步消息
+
