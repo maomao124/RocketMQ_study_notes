@@ -8345,3 +8345,187 @@ RocketMQ消息的存储是由ConsumeQueue和CommitLog配合完成的，消息真
 
 ### 刷盘机制
 
+RocketMQ的消息是存储到磁盘上的，这样既能保证断电后恢复， 又可以让存储的消息量超出内存的限制。RocketMQ为了提高性能，会尽可能地保证磁盘的顺序写。消息在通过Producer写入RocketMQ的时候，有两种写磁盘方式，分布式同步刷盘和异步刷盘。
+
+
+
+![image-20221212122305973](img/RocketMQ学习笔记/image-20221212122305973.png)
+
+
+
+同步刷盘还是异步刷盘，都是通过Broker配置文件里的flushDiskType 参数设置的，这个参数被配置成SYNC_FLUSH、ASYNC_FLUSH中的 一个
+
+
+
+#### 同步刷盘
+
+在返回写成功状态时，消息已经被写入磁盘。具体流程是，消息写入内存的PAGECACHE后，立刻通知刷盘线程刷盘， 然后等待刷盘完成，刷盘线程执行完成后唤醒等待的线程，返回消息写成功的状态。
+
+
+
+
+
+#### 异步刷盘
+
+在返回写成功状态时，消息可能只是被写入了内存的PAGECACHE，写操作的返回快，吞吐量大；当内存里的消息量积累到一定程度时，统一触发写磁盘动作，快速写入。
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 高可用性机制
+
+RocketMQ分布式集群是通过Master和Slave的配合达到高可用性的。
+
+Master和Slave的区别：在Broker的配置文件中，参数 brokerId的值为0表明这个Broker是Master，大于0表明这个Broker是 Slave，同时brokerRole参数也会说明这个Broker是Master还是Slave。
+
+Master角色的Broker支持读和写，Slave角色的Broker仅支持读，也就是 Producer只能和Master角色的Broker连接写入消息；Consumer可以连接 Master角色的Broker，也可以连接Slave角色的Broker来读取消息。
+
+
+
+
+
+### 消息消费高可用
+
+在Consumer的配置文件中，并不需要设置是从Master读还是从Slave 读，当Master不可用或者繁忙的时候，Consumer会被自动切换到从Slave 读。有了自动切换Consumer这种机制，当一个Master角色的机器出现故障后，Consumer仍然可以从Slave读取消息，不影响Consumer程序。这就达到了消费端的高可用性。
+
+
+
+
+
+### 消息发送高可用
+
+在创建Topic的时候，把Topic的多个Message Queue创建在多个Broker组上（相同Broker名称，不同 brokerId的机器组成一个Broker组），这样当一个Broker组的Master不可 用后，其他组的Master仍然可用，Producer仍然可以发送消息。 RocketMQ目前还不支持把Slave自动转成Master，如果机器资源不足， 需要把Slave转成Master，则要手动停止Slave角色的Broker，更改配置文件，用新的配置文件启动Broker。
+
+
+
+
+
+
+
+### 消息主从复制
+
+如果一个Broker组有Master和Slave，消息需要从Master复制到Slave 上，有同步和异步两种复制方式
+
+
+
+同步复制和异步复制是通过Broker配置文件里的brokerRole参数进行设置的，这个参数可以被设置成ASYNC_MASTER、 SYNC_MASTER、SLAVE三个值中的一个
+
+
+
+**同步复制**
+
+同步复制方式是等Master和Slave均写成功后才反馈给客户端写成功状态
+
+在同步复制方式下，如果Master出故障， Slave上有全部的备份数据，容易恢复，但是同步复制会增大数据写入 延迟，降低系统吞吐量
+
+
+
+**异步复制**
+
+异步复制方式是只要Master写成功即可反馈给客户端写成功状态
+
+在异步复制方式下，系统拥有较低的延迟和较高的吞吐量，但是如果Master出了故障，有些数据因为没有被写入Slave，有可能会丢失
+
+
+
+
+
+### 总结
+
+实际应用中要结合业务场景，合理设置刷盘方式和主从复制方式， 尤其是SYNC_FLUSH方式，由于频繁地触发磁盘写动作，会明显降低 性能。通常情况下，应该把Master和Save配置成ASYNC_FLUSH的刷盘方式，主从之间配置成SYNC_MASTER的复制方式，这样即使有一台机器出故障，仍然能保证数据不丢，是个不错的选择。
+
+
+
+
+
+
+
+## 负载均衡
+
+### Producer负载均衡
+
+Producer端，每个实例在发消息的时候，默认会轮询所有的message queue发送，以达到让消息平均落在不同的queue上。而由于queue可以散落在不同的broker，所以消息就发送到不同的broker下
+
+
+
+![image-20221212123845830](img/RocketMQ学习笔记/image-20221212123845830.png)
+
+
+
+发布方会把第一条消息发送至 Queue 0，然后第二条消息发送至 Queue 1，以此类推
+
+
+
+
+
+
+
+### Consumer负载均衡
+
+#### 集群模式
+
+在集群消费模式下，每条消息只需要投递到订阅这个topic的Consumer Group下的一个实例即可。RocketMQ采用主动拉取的方式拉取并消费消息，在拉取的时候需要明确指定拉取哪一条message queue。
+
+而每当实例的数量有变更，都会触发一次所有实例的负载均衡，这时候会按照queue的数量和实例的数量平均分配queue给每个实例
+
+
+
+默认的分配算法是AllocateMessageQueueAveragely
+
+
+
+![image-20221212124001928](img/RocketMQ学习笔记/image-20221212124001928.png)
+
+
+
+
+
+还有另外一种平均的算法是AllocateMessageQueueAveragelyByCircle，也是平均分摊每一条queue，只是以环状轮流分queue的形式
+
+
+
+![image-20221212124024504](img/RocketMQ学习笔记/image-20221212124024504.png)
+
+
+
+
+
+需要注意的是，集群模式下，queue都是只允许分配只一个实例，这是由于如果多个实例同时消费一个queue的消息，由于拉取哪些消息是consumer主动控制的，那样会导致同一个消息在不同的实例下被消费多次，所以算法上都是一个queue只分给一个consumer实例，一个consumer实例可以允许同时分到不同的queue。
+
+通过增加consumer实例去分摊queue的消费，可以起到水平扩展的消费能力的作用。而有实例下线的时候，会重新触发负载均衡，这时候原来分配到的queue将分配到其他实例上继续消费。
+
+但是如果consumer实例的数量比message queue的总数量还多的话，多出来的consumer实例将无法分到queue，也就无法消费到消息，也就无法起到分摊负载的作用了。所以需要控制让queue的总数量大于等于consumer的数量。
+
+
+
+
+
+#### 广播模式
+
+由于广播模式下要求一条消息需要投递到一个消费组下面所有的消费者实例，所以也就没有消息被分摊消费的说法。
+
+在实现上，其中一个不同就是在consumer分配queue的时候，所有consumer都分到所有的queue。
+
+
+
+![image-20221212124128139](img/RocketMQ学习笔记/image-20221212124128139.png)
+
+
+
+
+
+
+
+
+
+## 消息重试
+
